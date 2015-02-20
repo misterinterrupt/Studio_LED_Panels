@@ -23,7 +23,7 @@ import java.io.IOException;
 
 public class tablet_pattern_player extends PApplet {
 
-boolean debug = true;
+boolean debug = false;
 
 
  
@@ -119,19 +119,19 @@ PImage errorScreen;
 public void setup() {
   
 
-size(1200,1920 );
-offScreenBuffer = createGraphics(501, 24, JAVA2D); // buffer with the same number of pixels as the wall
+  size(1260, 1600);
+  offScreenBuffer = createGraphics(501, 24, JAVA2D); // buffer with the same number of pixels as the wall
 
-println ("starting");
+  println ("starting");
   bg = loadImage("UI_Background.jpg");
 
   stroke(255);
   noFill();
   strokeWeight(4); 
-   PFont p = createFont("Verdana.ttf",40);
-    cp5 = new ControlP5(this); // 
-    cp5.setControlFont(p);
-    cp5.setAutoDraw(false);
+  PFont p = createFont("Verdana.ttf",40);
+  cp5 = new ControlP5(this); // 
+  cp5.setControlFont(p);
+  cp5.setAutoDraw(false);
     
     
    cp5.addSlider("bright")
@@ -151,98 +151,77 @@ println ("starting");
   
 
      
-    frameRate(15);
-     for (int i=0; i < 12; i++) {
-  UI_yPos[i] = (ui_yMultiplier *i) +Yoffset;
-}
-     
-      offButton = cp5.addButton("offButton")
-       
-      .setCaptionLabel("No Lights")
-       .setValue(0)
-       .setPosition(ui_xpos,UI_yPos[0])
-       .setSize(buttonSizeX,buttonSizeY)
-      
-      ;
-     
-     
-     
-        
-     
-      myButton1 = cp5.addButton("seq1")
-       
-      .setCaptionLabel("Light Sequence 1")
-       .setValue(0)
-       .setPosition(ui_xpos,UI_yPos[1])
-       .setSize(buttonSizeX,buttonSizeY)
-      
-      ;
-      
-      myButton2 = cp5.addButton("seq2")
-       
-      .setCaptionLabel("Light Sequence 2")
-       .setValue(0)
-       .setPosition(ui_xpos,UI_yPos[2])
-       .setSize(buttonSizeX,buttonSizeY)
-       
-      ;
-       
-      myButton3 = cp5.addButton("seq3")
-       
-      .setCaptionLabel("Light Sequence 3")
-       .setValue(0)
-       .setPosition(ui_xpos,UI_yPos[3])
-       .setSize(buttonSizeX,buttonSizeY)
-       
-      ;
-       
-      myButton4 = cp5.addButton("seq4")
-      .setCaptionLabel("Light Sequence 4")
-       .setValue(0)
-       .setPosition(ui_xpos,UI_yPos[4])
-       .setSize(buttonSizeX,buttonSizeY)
-      
-       ;
-       
-       myButton5 = cp5.addButton("seq5")
-      .setCaptionLabel("Light Sequence 5")
-       .setValue(0)
-       .setPosition(ui_xpos,UI_yPos[5])
-       .setSize(buttonSizeX,buttonSizeY)
-       
-       ;
-       
-       
-       
-       myButton6 = cp5.addButton("seq6")
-      .setCaptionLabel("Light Sequence 6")
-       .setValue(0)
-       .setPosition(ui_xpos,UI_yPos[6])
-       .setSize(buttonSizeX,buttonSizeY)
-      
-       ;
-       
-       
-       
-       myButton7 = cp5.addButton("seq7")
-      .setCaptionLabel("Light Sequence 7")
-       .setValue(0)
-       .setPosition(ui_xpos,UI_yPos[7])
-       .setSize(buttonSizeX,buttonSizeY)
-      
-       ;
-       
-        myButton8 = cp5.addButton("seq8")
-      .setCaptionLabel("Test Pattern")
-       .setValue(0)
-       .setPosition(ui_xpos,500) 
-       .setSize(buttonSizeX,buttonSizeY)
-      
-       ;
-       
+  frameRate(15);
+  for (int i=0; i < 12; i++) {
+    UI_yPos[i] = (ui_yMultiplier *i) +Yoffset;
+  }
   
-       
-       
+  offButton = cp5.addButton("offButton")
+   
+  .setCaptionLabel("No Lights")
+  .setValue(0)
+  .setPosition(ui_xpos,UI_yPos[0])
+  .setSize(buttonSizeX,buttonSizeY);
+ 
+ 
+ 
+    
+ 
+  myButton1 = cp5.addButton("seq1")
+   
+  .setCaptionLabel("Light Sequence 1")
+  .setValue(0)
+  .setPosition(ui_xpos,UI_yPos[1])
+  .setSize(buttonSizeX,buttonSizeY);
+  
+  myButton2 = cp5.addButton("seq2")
+   
+  .setCaptionLabel("Light Sequence 2")
+  .setValue(0)
+  .setPosition(ui_xpos,UI_yPos[2])
+  .setSize(buttonSizeX,buttonSizeY);
+   
+  myButton3 = cp5.addButton("seq3")
+   
+  .setCaptionLabel("Light Sequence 3")
+  .setValue(0)
+  .setPosition(ui_xpos,UI_yPos[3])
+  .setSize(buttonSizeX,buttonSizeY);
+   
+  myButton4 = cp5.addButton("seq4")
+  .setCaptionLabel("Light Sequence 4")
+  .setValue(0)
+  .setPosition(ui_xpos,UI_yPos[4])
+  .setSize(buttonSizeX,buttonSizeY);
+   
+   myButton5 = cp5.addButton("seq5")
+  .setCaptionLabel("Light Sequence 5")
+  .setValue(0)
+  .setPosition(ui_xpos,UI_yPos[5])
+  .setSize(buttonSizeX,buttonSizeY);
+   
+   
+   
+   myButton6 = cp5.addButton("seq6")
+  .setCaptionLabel("Light Sequence 6")
+  .setValue(0)
+  .setPosition(ui_xpos,UI_yPos[6])
+  .setSize(buttonSizeX,buttonSizeY);
+   
+   
+   
+   myButton7 = cp5.addButton("seq7")
+  .setCaptionLabel("Light Sequence 7")
+  .setValue(0)
+  .setPosition(ui_xpos,UI_yPos[7])
+  .setSize(buttonSizeX,buttonSizeY);
+   
+  myButton8 = cp5.addButton("seq8")
+  .setCaptionLabel("Test Pattern")
+  .setValue(0)
+  .setPosition(ui_xpos,500) 
+  .setSize(buttonSizeX,buttonSizeY);
+
   whichMovie=1; //default
     
  
@@ -253,99 +232,89 @@ println ("starting");
   registry.setAutoThrottle(true);
     
    
-  } 
+} 
    
  
 
 
 public void draw() {
-    background(bg);
-    cp5.draw();
-   pushMatrix();
-    translate(0,UI_yPos[whichMovie-1]);
+  background(bg);
+  cp5.draw();
+  pushMatrix();
+  translate(0,UI_yPos[whichMovie-1]);
   rect (100,0,buttonSizeX,buttonSizeY); // selection state for the buttons
   popMatrix();
  
   
   switch(whichMovie){ // sets the path and duration of the PNG sequence based on the button selection
     
-       
+    case 1:
+      pathBase = pathBase1;
+      numFrames = duration1;
+      buttonYpos = 350+Yoffset;
+      break;
     
-          case 1:
-          pathBase = pathBase1;
-          numFrames = duration1;
-            buttonYpos = 350+Yoffset;
-          break;
-          
-          case 2:
-          pathBase = pathBase2;
-          numFrames = duration2;
-            buttonYpos = 450+Yoffset;
-          break;
-          
-          case 3:
-          pathBase = pathBase3;
-          numFrames = duration3;
-            buttonYpos = 550+Yoffset;
-          break;     
-          
-          
-          case 4:
-          pathBase = pathBase4;
-          numFrames = duration4;
-          buttonYpos = 650+Yoffset;
-          break;   
-          
-          case 5:
-          pathBase = pathBase5;
-          numFrames = duration5;
-          buttonYpos = 750+Yoffset;
-          break;   
-          
-             case 6:
-          pathBase = pathBase6;
-          numFrames = duration6;
-          buttonYpos = 850+Yoffset;
-          break;  
-          
-           case 7:
-          pathBase = pathBase7;
-          numFrames = duration7;
-          buttonYpos = 950+Yoffset;
-          break;  
-          
-           case 8:
-          pathBase = pathBase8;
-          numFrames = duration8;
-          buttonYpos = 1050+Yoffset;
-          break;  
-          
-           case 9:
-          pathBase = pathBase9;
-          numFrames = duration9;
-          buttonYpos = 1150+Yoffset;
-          break;  
-          
-          
-          
-          
+    case 2:
+      pathBase = pathBase2;
+      numFrames = duration2;
+      buttonYpos = 450+Yoffset;
+      break;
     
-           
-      }
+    case 3:
+      pathBase = pathBase3;
+      numFrames = duration3;
+      buttonYpos = 550+Yoffset;
+      break;     
       
-      
-      
-     
-   currentFrame = (currentFrame+1) % numFrames;  // Use % to cycle through frames and loop
-   String imageName = "sequences/" + pathBase + "/pixelData" + nf(currentFrame, 5) + ".jpg";
-    mainMovie = loadImage(imageName);
-    if (debug) {image (mainMovie,0,0,1002,48);}
+    
+    case 4:
+      pathBase = pathBase4;
+      numFrames = duration4;
+      buttonYpos = 650+Yoffset;
+      break;   
+    
+    case 5:
+      pathBase = pathBase5;
+      numFrames = duration5;
+      buttonYpos = 750+Yoffset;
+      break;   
+    
+    case 6:
+      pathBase = pathBase6;
+      numFrames = duration6;
+      buttonYpos = 850+Yoffset;
+      break;  
+    
+    case 7:
+      pathBase = pathBase7;
+      numFrames = duration7;
+      buttonYpos = 950+Yoffset;
+      break;  
+    
+    case 8:
+      pathBase = pathBase8;
+      numFrames = duration8;
+      buttonYpos = 1050+Yoffset;
+      break;  
+    
+    case 9:
+      pathBase = pathBase9;
+      numFrames = duration9;
+      buttonYpos = 1150+Yoffset;
+      break;  
+    
+  }
+  
+  currentFrame = (currentFrame+1) % numFrames;  // Use % to cycle through frames and loop
+  String imageName = "sequences/" + pathBase + "/pixelData" + nf(currentFrame, 5) + ".jpg";
+  mainMovie = loadImage(imageName);
+  if (debug) {image (mainMovie,0,0,1002,48);}
     
   
-offScreenBuffer.beginDraw();
-offScreenBuffer.image(mainMovie, 0, 0,501,24);
-// if (noStrips) {image(errorScreen, 000, 0,800,1280);} // display error if there are no stripsn detected
-scrape(); // scrape the offscreen buffer 
+  offScreenBuffer.beginDraw();
+  offScreenBuffer.image(mainMovie, 0, 0,501,24);
+  // if (noStrips) {image(errorScreen, 000, 0,800,1280);} // display error if there are no stripsn detected
+  scrape(); // scrape the offscreen buffer 
 
 }
 
@@ -361,29 +330,25 @@ public void controlEvent(ControlEvent theEvent) {
 
 public void offButton(int theValue) {
 
-
   whichMovie = 1;
-   currentFrame = 0;
+  currentFrame = 0;
 
 }
 
 
 public void seq1(int theValue) {
 
-
   whichMovie = 2;
-   currentFrame = 0;
+  currentFrame = 0;
 
 
 }
 
 public void seq2(int theValue) {
 
-
   whichMovie = 3;
-   currentFrame = 0;
+  currentFrame = 0;
   
-
 }
 
 
@@ -393,77 +358,65 @@ public void seq3(int theValue) {
   whichMovie = 4;
   currentFrame = 0;
 
-      
-
- 
 }
 
 public void seq4(int theValue) {
-  whichMovie = 5;
-   currentFrame = 0;
 
+  whichMovie = 5;
+  currentFrame = 0;
 
 }
 
 public void seq5(int theValue) {
 
-
   whichMovie = 6;
-   currentFrame = 0;
+  currentFrame = 0;
 
 
 }
-
-
-
 
 
 
 public void seq6(int theValue) {
 
   whichMovie = 7;
-   currentFrame = 0;
+  currentFrame = 0;
 
 }
 
 public void seq7(int theValue) {
 
-
   whichMovie = 8;
-   currentFrame = 0;
+  currentFrame = 0;
 
 }
 
 public void seq8(int theValue) {
 
-
   whichMovie = 9;
-   currentFrame = 0;
+  currentFrame = 0;
 
 }
 
 
 public void seq9(int theValue) {
 
-
   whichMovie = 10;
-   currentFrame = 0;
+  currentFrame = 0;
 
 }
 
 public void seq10(int theValue) {
 
-
   whichMovie = 11;
-   currentFrame = 0;
+  currentFrame = 0;
 
 }
 
 public void seq11(int theValue) {
 
-
   whichMovie = 12;
-   currentFrame = 0;
+  currentFrame = 0;
 
 }
 
