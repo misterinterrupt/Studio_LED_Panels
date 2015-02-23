@@ -3,7 +3,6 @@ import processing.data.*;
 import processing.event.*; 
 import processing.opengl.*; 
 
-import javax.swing.*; 
 import com.heroicrobot.dropbit.registry.*; 
 import com.heroicrobot.dropbit.devices.pixelpusher.Pixel; 
 import com.heroicrobot.dropbit.devices.pixelpusher.Strip; 
@@ -23,10 +22,9 @@ import java.io.IOException;
 
 public class tablet_pattern_player extends PApplet {
 
-boolean debug = false;
+boolean debug = true;
 
 
- 
 
 
 
@@ -52,7 +50,7 @@ Button myButton10;
 Button myButton11;
 
 
-int Yoffset = 620; // this helps me quickly modify the position of the buttons 
+int Yoffset = 100;//620; // this helps me quickly modify the position of the buttons 
 int ui_xpos = 100;
 int ui_yMultiplier = 100;
 int buttonSizeX=500;
@@ -60,7 +58,7 @@ int buttonSizeY=60;
 
 int sliderValue = 100;
 
- int globalBright=100;
+int globalBright=100;
 
 int[] UI_yPos = new int [12];  // an array to hold the position of buttons.
 
@@ -112,6 +110,10 @@ PImage mainMovie ;
 DeviceRegistry registry;
 PusherObserver observer;
 PGraphics offScreenBuffer;
+int numPanels = 3;
+int stripLength = 167;
+int panelDisplayHeight = 24;
+int combinedPanelDisplayWidth = numPanels * stripLength;
 PImage bg;
 PImage errorScreen;
 
@@ -119,8 +121,8 @@ PImage errorScreen;
 public void setup() {
   
 
-  size(1260, 1600);
-  offScreenBuffer = createGraphics(501, 24, JAVA2D); // buffer with the same number of pixels as the wall
+  size(1200, 1920);
+  offScreenBuffer = createGraphics(combinedPanelDisplayWidth, panelDisplayHeight, JAVA2D); // buffer with the same number of pixels as the wall
 
   println ("starting");
   bg = loadImage("UI_Background.jpg");
@@ -133,7 +135,7 @@ public void setup() {
   cp5.setControlFont(p);
   cp5.setAutoDraw(false);
     
-    
+  
    cp5.addSlider("bright")
      .setCaptionLabel("Brightness")
      .setRange(0,100)
@@ -148,9 +150,9 @@ public void setup() {
   // reposition the Label for controller 'slider'
   cp5.getController("bright").getValueLabel().align(ControlP5.RIGHT, ControlP5.TOP_OUTSIDE).setPaddingX(0);
   cp5.getController("bright").getCaptionLabel().align(ControlP5.LEFT, ControlP5.TOP_OUTSIDE).setPaddingX(0);
-  
 
-     
+
+
   frameRate(15);
   for (int i=0; i < 12; i++) {
     UI_yPos[i] = (ui_yMultiplier *i) +Yoffset;
@@ -313,6 +315,7 @@ public void draw() {
   
   offScreenBuffer.beginDraw();
   offScreenBuffer.image(mainMovie, 0, 0,501,24);
+
   // if (noStrips) {image(errorScreen, 000, 0,800,1280);} // display error if there are no stripsn detected
   scrape(); // scrape the offscreen buffer 
 
@@ -450,9 +453,9 @@ public void bright(float globalBright) { // takes a brightness value between 0 -
 class PusherObserver implements Observer {
   public boolean hasStrips = false;
   public void update(Observable registry, Object updatedDevice) {
-    println("Registry changed!");
+    //println("Registry changed!");
     if (updatedDevice != null) {
-      println("Device change: " + updatedDevice);
+      //println("Device change: " + updatedDevice);
     }
     this.hasStrips = true;
   }
@@ -467,7 +470,7 @@ public void scrape() {
   if (observer.hasStrips) {
     registry.startPushing();
     boolean phase = false;
-int stride = 167; // number of LEDs per row
+    int stride = 167; // number of LEDs per row
 
     // First, scrape for the left hand panel of the display
 
@@ -475,7 +478,7 @@ int stride = 167; // number of LEDs per row
 
     if (strips.size() > 0) {
 
- for (Strip strip : strips) {   // for each strip (y-direction)
+      for (Strip strip : strips) {   // for each strip (y-direction)
 
         int strides_per_strip = 2;
         float xscale = 1;
@@ -504,14 +507,14 @@ int stride = 167; // number of LEDs per row
     } // strips.size()
 
 
-ypos = 0;
+    ypos = 0;
 
     // Secondly, scrape for the middle panel of the display
-     strips = registry.getStrips(2);
+    strips = registry.getStrips(2);
 
     if (strips.size() > 0) {
 
- for (Strip strip : strips) {   // for each strip (y-direction)
+      for (Strip strip : strips) {   // for each strip (y-direction)
 
         int strides_per_strip = 2;
         float xscale = 1;
@@ -546,11 +549,11 @@ ypos = 0;
     
     ypos = 0;
 
- strips = registry.getStrips(3);
+    strips = registry.getStrips(3);
 
     if (strips.size() > 0) {
 
- for (Strip strip : strips) {   // for each strip (y-direction)
+      for (Strip strip : strips) {   // for each strip (y-direction)
 
         int strides_per_strip = 2;
         float xscale = 1;
@@ -586,6 +589,57 @@ ypos = 0;
   } // observer
 } // scrape
 
+public void scrape() {
+  // scrape for the strips 501 x 24 (167 per panel)
+  
+  
+  float xpos = 0, ypos = 0;
+  offScreenBuffer.loadPixels();
+  if (observer.hasStrips) {
+    registry.startPushing();
+    boolean phase = false;
+    int stride = stripLength; // number of LEDs per row
+    float xscale = 1;
+    // First, scrape for the 1st set of panel groups
+
+    for(int panelIdx = 1; panelIdx < numPanels; panelIdx++) {
+
+      List<Strip> strips = registry.getStrips(panelIdx);
+
+      if (strips.size() > 0) {
+
+        for (Strip strip : strips) {   // for each strip (y-direction)
+          
+          for (int stripx = 0; stripx < 334; stripx++) {  // loop through each pixel in the strip
+          
+            int xpixel = stripx % stride;
+            int stridenumber = stripx / stride; 
+            
+            // zigzag code
+            if ((stridenumber & 1) == 0) { // we are going left to right
+              xpos = xpixel * xscale;
+              
+            } else { // we are going right to left
+              xpos = ((stride - 1)-xpixel) * xscale;
+               
+            }
+            // add 0-indexed multiplier of stride for xpos
+            xpos = xpos + ((panelIdx - 1) * stride);
+            //println ("Group" + panelIdx + " getting pixel from "+xpos + "," + ypos);
+            int c = offScreenBuffer.get((int) xpos, (int)ypos);
+            strip.setPixel(c, stripx);
+             if (stripx == stride || stripx == 333) { ypos=ypos+1;} // move to the next yPos of the buffer
+            
+          } //end x loop
+         
+        } // for each strip
+      } // strips.size() check for any strips
+
+      // reset y scan
+      ypos = 0;
+    }
+  } // observer
+} // scrape
   static public void main(String[] passedArgs) {
     String[] appletArgs = new String[] { "tablet_pattern_player" };
     if (passedArgs != null) {

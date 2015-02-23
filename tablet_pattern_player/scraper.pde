@@ -7,7 +7,7 @@ void scrape() {
   if (observer.hasStrips) {
     registry.startPushing();
     boolean phase = false;
-int stride = 167; // number of LEDs per row
+    int stride = 167; // number of LEDs per row
 
     // First, scrape for the left hand panel of the display
 
@@ -15,7 +15,7 @@ int stride = 167; // number of LEDs per row
 
     if (strips.size() > 0) {
 
- for (Strip strip : strips) {   // for each strip (y-direction)
+      for (Strip strip : strips) {   // for each strip (y-direction)
 
         int strides_per_strip = 2;
         float xscale = 1;
@@ -44,14 +44,14 @@ int stride = 167; // number of LEDs per row
     } // strips.size()
 
 
-ypos = 0;
+    ypos = 0;
 
     // Secondly, scrape for the middle panel of the display
-     strips = registry.getStrips(2);
+    strips = registry.getStrips(2);
 
     if (strips.size() > 0) {
 
- for (Strip strip : strips) {   // for each strip (y-direction)
+      for (Strip strip : strips) {   // for each strip (y-direction)
 
         int strides_per_strip = 2;
         float xscale = 1;
@@ -86,11 +86,11 @@ ypos = 0;
     
     ypos = 0;
 
- strips = registry.getStrips(3);
+    strips = registry.getStrips(3);
 
     if (strips.size() > 0) {
 
- for (Strip strip : strips) {   // for each strip (y-direction)
+      for (Strip strip : strips) {   // for each strip (y-direction)
 
         int strides_per_strip = 2;
         float xscale = 1;

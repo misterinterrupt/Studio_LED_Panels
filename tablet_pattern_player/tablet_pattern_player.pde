@@ -1,7 +1,6 @@
-boolean debug = false;
+boolean debug = true;
 
 
-import javax.swing.*; 
 import com.heroicrobot.dropbit.registry.*;
 import com.heroicrobot.dropbit.devices.pixelpusher.Pixel;
 import com.heroicrobot.dropbit.devices.pixelpusher.Strip;
@@ -27,7 +26,7 @@ Button myButton10;
 Button myButton11;
 
 
-int Yoffset = 620; // this helps me quickly modify the position of the buttons 
+int Yoffset = 100;//620; // this helps me quickly modify the position of the buttons 
 int ui_xpos = 100;
 int ui_yMultiplier = 100;
 int buttonSizeX=500;
@@ -35,7 +34,7 @@ int buttonSizeY=60;
 
 int sliderValue = 100;
 
- int globalBright=100;
+int globalBright=100;
 
 int[] UI_yPos = new int [12];  // an array to hold the position of buttons.
 
@@ -87,6 +86,10 @@ PImage mainMovie ;
 DeviceRegistry registry;
 PusherObserver observer;
 PGraphics offScreenBuffer;
+int numPanels = 3;
+int stripLength = 167;
+int panelDisplayHeight = 24;
+int combinedPanelDisplayWidth = numPanels * stripLength;
 PImage bg;
 PImage errorScreen;
 
@@ -94,8 +97,8 @@ PImage errorScreen;
 void setup() {
   
 
-  size(1260, 1600);
-  offScreenBuffer = createGraphics(501, 24, JAVA2D); // buffer with the same number of pixels as the wall
+  size(1200, 1920);
+  offScreenBuffer = createGraphics(combinedPanelDisplayWidth, panelDisplayHeight, JAVA2D); // buffer with the same number of pixels as the wall
 
   println ("starting");
   bg = loadImage("UI_Background.jpg");
@@ -108,7 +111,7 @@ void setup() {
   cp5.setControlFont(p);
   cp5.setAutoDraw(false);
     
-    
+  
    cp5.addSlider("bright")
      .setCaptionLabel("Brightness")
      .setRange(0,100)
@@ -123,9 +126,9 @@ void setup() {
   // reposition the Label for controller 'slider'
   cp5.getController("bright").getValueLabel().align(ControlP5.RIGHT, ControlP5.TOP_OUTSIDE).setPaddingX(0);
   cp5.getController("bright").getCaptionLabel().align(ControlP5.LEFT, ControlP5.TOP_OUTSIDE).setPaddingX(0);
-  
 
-     
+
+
   frameRate(15);
   for (int i=0; i < 12; i++) {
     UI_yPos[i] = (ui_yMultiplier *i) +Yoffset;
@@ -288,6 +291,7 @@ void draw() {
   
   offScreenBuffer.beginDraw();
   offScreenBuffer.image(mainMovie, 0, 0,501,24);
+
   // if (noStrips) {image(errorScreen, 000, 0,800,1280);} // display error if there are no stripsn detected
   scrape(); // scrape the offscreen buffer 
 
