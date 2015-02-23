@@ -1,0 +1,6 @@
+resolution concerns
+
+501 pixels wide
+15 fps
+3 secs for test vid stripe to cross screen
+

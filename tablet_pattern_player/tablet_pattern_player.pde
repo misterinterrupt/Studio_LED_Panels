@@ -1,6 +1,5 @@
 boolean debug = true;
 
-
 import com.heroicrobot.dropbit.registry.*;
 import com.heroicrobot.dropbit.devices.pixelpusher.Pixel;
 import com.heroicrobot.dropbit.devices.pixelpusher.Strip;
@@ -9,8 +8,6 @@ import com.heroicrobot.dropbit.devices.pixelpusher.PusherCommand;
 import java.util.*;
 import controlP5.*;
 ControlP5 cp5;
-
-
 
 Button offButton;
 Button myButton1;
@@ -86,22 +83,26 @@ PImage mainMovie ;
 DeviceRegistry registry;
 PusherObserver observer;
 PGraphics offScreenBuffer;
+
 int numPanels = 3;
-int stripLength = 167;
+int stride = 167; // number of LEDs per row aka striplength
 int panelDisplayHeight = 24;
-int combinedPanelDisplayWidth = numPanels * stripLength;
+float xscale = 1; // horizontal scale factor
+int combinedPanelDisplayWidth = numPanels * stride;
+// define each set by group start and group end indexes
+int[][] sets = {{1,4},{5,6}};
+
 PImage bg;
 PImage errorScreen;
 
-
 void setup() {
-  
 
-  size(1200, 1920);
+
+  size(1260, 1600);
   offScreenBuffer = createGraphics(combinedPanelDisplayWidth, panelDisplayHeight, JAVA2D); // buffer with the same number of pixels as the wall
 
   println ("starting");
-  bg = loadImage("UI_Background.jpg");
+  // bg = loadImage("UI_Background.jpg");
 
   stroke(255);
   noFill();
@@ -216,7 +217,7 @@ void setup() {
 
 
 void draw() {
-  background(bg);
+  // background(bg);
   cp5.draw();
   pushMatrix();
   translate(0,UI_yPos[whichMovie-1]);

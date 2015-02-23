@@ -31,10 +31,7 @@ boolean debug = true;
 
 
 
-
 ControlP5 cp5;
-
-
 
 Button offButton;
 Button myButton1;
@@ -110,22 +107,26 @@ PImage mainMovie ;
 DeviceRegistry registry;
 PusherObserver observer;
 PGraphics offScreenBuffer;
+
 int numPanels = 3;
-int stripLength = 167;
+int stride = 167; // number of LEDs per row aka striplength
 int panelDisplayHeight = 24;
-int combinedPanelDisplayWidth = numPanels * stripLength;
+float xscale = 1; // horizontal scale factor
+int combinedPanelDisplayWidth = numPanels * stride;
+// define each set by group start and group end indexes
+int[][] sets = {{1,4},{5,6}};
+
 PImage bg;
 PImage errorScreen;
 
-
 public void setup() {
-  
 
-  size(1200, 1920);
+
+  size(1260, 1600);
   offScreenBuffer = createGraphics(combinedPanelDisplayWidth, panelDisplayHeight, JAVA2D); // buffer with the same number of pixels as the wall
 
   println ("starting");
-  bg = loadImage("UI_Background.jpg");
+  // bg = loadImage("UI_Background.jpg");
 
   stroke(255);
   noFill();
@@ -240,7 +241,7 @@ public void setup() {
 
 
 public void draw() {
-  background(bg);
+  // background(bg);
   cp5.draw();
   pushMatrix();
   translate(0,UI_yPos[whichMovie-1]);
@@ -465,170 +466,35 @@ public void scrape() {
   // scrape for the strips 501 x 24 (167 per panel)
   
   
-  float xpos =0, ypos = 0;
-  offScreenBuffer.loadPixels();
-  if (observer.hasStrips) {
-    registry.startPushing();
-    boolean phase = false;
-    int stride = 167; // number of LEDs per row
-
-    // First, scrape for the left hand panel of the display
-
-    List<Strip> strips = registry.getStrips(1);
-
-    if (strips.size() > 0) {
-
-      for (Strip strip : strips) {   // for each strip (y-direction)
-
-        int strides_per_strip = 2;
-        float xscale = 1;
-        
-        for (int stripx = 0; stripx < 334; stripx++) {  // loop through each pixel in the strip
-        
-          int xpixel = stripx % stride;
-          int stridenumber = stripx / stride; 
-          
-          // zigzag code
-          if ((stridenumber & 1) == 0) { // we are going left to right
-            xpos = xpixel * xscale;
-            
-          } else { // we are going right to left
-            xpos = ((stride - 1)-xpixel) * xscale;
-             
-          }
-       //  println ("Group1 getting pixel from "+xpos + "," + ypos);
-          int c = offScreenBuffer.get((int) xpos, (int)ypos);
-          strip.setPixel(c, stripx);
-           if (stripx == stride || stripx == 333) { ypos=ypos+1;} // move to the next yPos of the buffer
-          
-        } //end x loop
-       
-      } //strips
-    } // strips.size()
-
-
-    ypos = 0;
-
-    // Secondly, scrape for the middle panel of the display
-    strips = registry.getStrips(2);
-
-    if (strips.size() > 0) {
-
-      for (Strip strip : strips) {   // for each strip (y-direction)
-
-        int strides_per_strip = 2;
-        float xscale = 1;
-        
-        for (int stripx = 0; stripx < 334; stripx++) {  // loop through each pixel in the strip
-        
-          int xpixel = stripx % stride;
-          int stridenumber = stripx / stride; 
-          
-          // zigzag code
-          if ((stridenumber & 1) == 0) { // we are going left to right
-            xpos = xpixel * xscale;
-            
-          } else { // we are going right to left
-            xpos = ((stride - 1)-xpixel) * xscale;
-             
-          }
-          
-          xpos=xpos+167;
-     // println ("Group2 getting pixel from "+xpos + "," + ypos);
-          int c = offScreenBuffer.get((int) xpos, (int)ypos);
-          strip.setPixel(c, stripx);
-           if (stripx == stride || stripx == 333) { ypos=ypos+1;} // move to the next yPos of the buffer
-          
-        } //end x loop
-       
-      } //strips
-    } // strips.size()
-
-
-    // Finally, scrape for the right hand panel of the display
-    
-    ypos = 0;
-
-    strips = registry.getStrips(3);
-
-    if (strips.size() > 0) {
-
-      for (Strip strip : strips) {   // for each strip (y-direction)
-
-        int strides_per_strip = 2;
-        float xscale = 1;
-        
-        for (int stripx = 0; stripx < 334; stripx++) {  // loop through each pixel in the strip
-        
-          int xpixel = stripx % stride;
-          int stridenumber = stripx / stride; 
-          
-          // zigzag code
-          if ((stridenumber & 1) == 0) { // we are going left to right
-            xpos = xpixel * xscale;
-            
-          } else { // we are going right to left
-            xpos = ((stride - 1)-xpixel) * xscale;
-             
-          }
-       //  println ("Group1 getting pixel from "+xpos + "," + ypos);
-       xpos=xpos+167+167;
-          int c = offScreenBuffer.get((int) xpos, (int)ypos);
-          strip.setPixel(c, stripx);
-           if (stripx == stride || stripx == 333) { ypos=ypos+1;} // move to the next yPos of the buffer
-          
-        } //end x loop
-       
-      } //strips
-    } // strips.size()
-
-
-
-
-
-  } // observer
-} // scrape
-
-public void scrape() {
-  // scrape for the strips 501 x 24 (167 per panel)
-  
-  
   float xpos = 0, ypos = 0;
   offScreenBuffer.loadPixels();
   if (observer.hasStrips) {
     registry.startPushing();
-    boolean phase = false;
-    int stride = stripLength; // number of LEDs per row
-    float xscale = 1;
-    // First, scrape for the 1st set of panel groups
-
     for(int panelIdx = 1; panelIdx < numPanels; panelIdx++) {
 
       List<Strip> strips = registry.getStrips(panelIdx);
 
       if (strips.size() > 0) {
-
         for (Strip strip : strips) {   // for each strip (y-direction)
           
           for (int stripx = 0; stripx < 334; stripx++) {  // loop through each pixel in the strip
           
             int xpixel = stripx % stride;
-            int stridenumber = stripx / stride; 
-            
+            int stridenumber = stripx / stride;             
             // zigzag code
             if ((stridenumber & 1) == 0) { // we are going left to right
               xpos = xpixel * xscale;
-              
             } else { // we are going right to left
               xpos = ((stride - 1)-xpixel) * xscale;
-               
             }
             // add 0-indexed multiplier of stride for xpos
             xpos = xpos + ((panelIdx - 1) * stride);
             //println ("Group" + panelIdx + " getting pixel from "+xpos + "," + ypos);
             int c = offScreenBuffer.get((int) xpos, (int)ypos);
             strip.setPixel(c, stripx);
-             if (stripx == stride || stripx == 333) { ypos=ypos+1;} // move to the next yPos of the buffer
+            if (stripx == stride || stripx == 333) {
+              ypos=ypos+1;
+            } // move to the next yPos of the buffer
             
           } //end x loop
          
