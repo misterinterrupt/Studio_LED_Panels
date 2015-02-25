@@ -1,5 +1,3 @@
-boolean debug = true;
-
 import com.heroicrobot.dropbit.registry.*;
 import com.heroicrobot.dropbit.devices.pixelpusher.Pixel;
 import com.heroicrobot.dropbit.devices.pixelpusher.Strip;
@@ -9,32 +7,55 @@ import java.util.*;
 import controlP5.*;
 ControlP5 cp5;
 
-Button offButton;
-Button myButton1;
-Button myButton2;
-Button myButton3;
-Button myButton4;
-Button myButton5;
-Button myButton6;
-Button myButton7;
-Button myButton8;
-Button myButton9;
-Button myButton10;
-Button myButton11;
+int appPaddingWidth = 200;
+int appPaddingHeight = 150;
 
+// pattern preview buffer
+int patternPreviewHeight = 200;
+int patternPreviewWidth = 1200;
+int patternPreviewX = appPaddingWidth;
+int patternPreviewY = appPaddingHeight;
 
-int Yoffset = 100;//620; // this helps me quickly modify the position of the buttons 
-int ui_xpos = 100;
-int ui_yMultiplier = 100;
-int buttonSizeX=500;
-int buttonSizeY=60;
+// send pattern to set buttons
+int patternSendWidth = 440;
+int patternSendHeight = 160;
+int patternSend1X = 1440;
+int patternSend1Y = 530;
+int patternSend2X = 1920;
+int patternSend2Y = 530;
+
+// pattern preview button grid
+int numPatternButtonRows = 3;
+int numPatternButtonCols = 6;
+int numPatternButtons = numPatternButtonCols * numPatternButtonRows;
+Button[] patternButtons = new Button[numPatternButtons];
+int buttonGridY = appPaddingHeight + patternPreviewHeight;
+int buttonGridX = appPaddingWidth;
+int patternButtonWidth = 400;
+int patternButtonHeight = 160;
+int buttonGridPaddingRightWidth = 40;
+int buttonGridWidth = (numPatternButtonRows * patternButtonWidth);
+int ui_xposMultiplier = patternButtonWidth;
+int ui_yposMultiplier = patternButtonHeight;
+
+// mode button area (color picker to pattern preview & back)
+int colorPickerModeWidth = 1200;
+int colorPickerModeHeight = 120;
+int colorPickerModeX = appPaddingWidth;
+int colorPickerModeY = appPaddingHeight + patternPreviewHeight + (numPatternButtonCols * patternButtonHeight);
+
+int patternPreviewModeWidth = 1200;
+int patternPreviewModeHeight = 120;
+int patternPreviewModeX = appPaddingWidth;
+int patternPreviewModeY = appPaddingHeight + patternPreviewHeight + (numPatternButtonCols * patternButtonHeight);
+
+int logoX = appPaddingWidth + buttonGridWidth + buttonGridPaddingRightWidth;
+int logoY = appPaddingHeight;
 
 int sliderValue = 100;
-
 int globalBright=100;
 
-int[] UI_yPos = new int [12];  // an array to hold the position of buttons.
-
+int[][] patternButton_xyPos = new int[numPatternButtons][2];  // pattern button draw positions, array of [x,y]
 
 boolean noStrips = true;
 int buttonYpos = 0;
@@ -74,15 +95,15 @@ String pathBase9 = "seq8";
 int duration9 = 150;
 
 
-String pathBase = pathBase1; // set start patern to "all off"
+String pathBase = pathBase1; // set start pattern to "all off"
 int numFrames = duration1;
-PImage mainMovie ;
+PImage previewMovie;
 
 
 
 DeviceRegistry registry;
 PusherObserver observer;
-PGraphics offScreenBuffer;
+PGraphics patternPreviewBuffer;
 
 int numPanels = 3;
 int stride = 167; // number of LEDs per row aka striplength
@@ -90,24 +111,27 @@ int panelDisplayHeight = 24;
 float xscale = 1; // horizontal scale factor
 int combinedPanelDisplayWidth = numPanels * stride;
 // define each set by group start and group end indexes
-int[][] sets = {{1,4},{5,6}};
+int[][] panelSets = {{1,4},{5,6}};
+// this order array will be indexed by the limits in the sets variable,
+// the values represent the order that the controller groups are scraped to
+int[][] order = {{1,1}, {2,2}, {3,3}, {4,4}, {5,5}, {6,6}};
 
 PImage bg;
+PImage logo;
 PImage errorScreen;
+
 
 void setup() {
 
+  size(2560, 1600);
+  patternPreviewBuffer = createGraphics(combinedPanelDisplayWidth, panelDisplayHeight, JAVA2D); // buffer with the same number of pixels as the wall
 
-  size(1260, 1600);
-  offScreenBuffer = createGraphics(combinedPanelDisplayWidth, panelDisplayHeight, JAVA2D); // buffer with the same number of pixels as the wall
-
-  println ("starting");
-  // bg = loadImage("UI_Background.jpg");
-
+  bg = loadImage("skyflares_bg.png");
+  logo = loadImage("salesforce_logo.png");
   stroke(255);
   noFill();
   strokeWeight(4); 
-  PFont p = createFont("Verdana.ttf",40);
+  PFont p = createFont("Gotham-Medium.otf", 36);
   cp5 = new ControlP5(this); // 
   cp5.setControlFont(p);
   cp5.setAutoDraw(false);
@@ -117,8 +141,8 @@ void setup() {
      .setCaptionLabel("Brightness")
      .setRange(0,100)
      .setValue(100)
-     .setPosition(100,1650)
-     .setSize(850,buttonSizeY)
+     .setPosition(100, 400)
+     .setSize(850,patternButtonHeight)
      .setNumberOfTickMarks(20)
      .snapToTickMarks(true)
      .setDecimalPrecision(0) 
@@ -131,97 +155,47 @@ void setup() {
 
 
   frameRate(15);
-  for (int i=0; i < 12; i++) {
-    UI_yPos[i] = (ui_yMultiplier *i) +Yoffset;
+
+  // calculate pattern button positions
+  for(int j=0; j< numPatternButtonRows; j++) {
+    for (int i=0; i < numPatternButtonCols; i++) {
+      int idx = (i+(j*numPatternButtonCols));
+      patternButton_xyPos[idx][0] = buttonGridX + (ui_xposMultiplier * j);
+      patternButton_xyPos[idx][1] = (buttonGridY + (ui_yposMultiplier * i));
+      //println((idx) + " - x:"+patternButton_xyPos[idx][0]+" y:"+patternButton_xyPos[idx][1]);
+    }
   }
   
-  offButton = cp5.addButton("offButton")
-   
-  .setCaptionLabel("No Lights")
-  .setValue(0)
-  .setPosition(ui_xpos,UI_yPos[0])
-  .setSize(buttonSizeX,buttonSizeY);
- 
- 
- 
-    
- 
-  myButton1 = cp5.addButton("seq1")
-   
-  .setCaptionLabel("Light Sequence 1")
-  .setValue(0)
-  .setPosition(ui_xpos,UI_yPos[1])
-  .setSize(buttonSizeX,buttonSizeY);
-  
-  myButton2 = cp5.addButton("seq2")
-   
-  .setCaptionLabel("Light Sequence 2")
-  .setValue(0)
-  .setPosition(ui_xpos,UI_yPos[2])
-  .setSize(buttonSizeX,buttonSizeY);
-   
-  myButton3 = cp5.addButton("seq3")
-   
-  .setCaptionLabel("Light Sequence 3")
-  .setValue(0)
-  .setPosition(ui_xpos,UI_yPos[3])
-  .setSize(buttonSizeX,buttonSizeY);
-   
-  myButton4 = cp5.addButton("seq4")
-  .setCaptionLabel("Light Sequence 4")
-  .setValue(0)
-  .setPosition(ui_xpos,UI_yPos[4])
-  .setSize(buttonSizeX,buttonSizeY);
-   
-   myButton5 = cp5.addButton("seq5")
-  .setCaptionLabel("Light Sequence 5")
-  .setValue(0)
-  .setPosition(ui_xpos,UI_yPos[5])
-  .setSize(buttonSizeX,buttonSizeY);
-   
-   
-   
-   myButton6 = cp5.addButton("seq6")
-  .setCaptionLabel("Light Sequence 6")
-  .setValue(0)
-  .setPosition(ui_xpos,UI_yPos[6])
-  .setSize(buttonSizeX,buttonSizeY);
-   
-   
-   
-   myButton7 = cp5.addButton("seq7")
-  .setCaptionLabel("Light Sequence 7")
-  .setValue(0)
-  .setPosition(ui_xpos,UI_yPos[7])
-  .setSize(buttonSizeX,buttonSizeY);
-   
-  myButton8 = cp5.addButton("seq8")
-  .setCaptionLabel("Test Pattern")
-  .setValue(0)
-  .setPosition(ui_xpos,500) 
-  .setSize(buttonSizeX,buttonSizeY);
+  for(int b=0; b<numPatternButtons; b++) {
+    String label = "Pattern #" + (b+1);
+    patternButtons[b] = cp5.addButton("seq" + (b+1))
+      .setCaptionLabel(label)
+      .setValueLabel(label)
+      .setStringValue(label)
+      .setValue(0)
+      .setPosition(patternButton_xyPos[b][0], patternButton_xyPos[b][1])
+      .setSize(patternButtonWidth, patternButtonHeight);
+  }
+
 
   whichMovie=1; //default
-    
  
   registry = new DeviceRegistry();
   observer = new PusherObserver();
   registry.addObserver(observer);
   registry.setAntiLog(true);
   registry.setAutoThrottle(true);
-    
-   
-} 
-   
- 
+  
+}
 
 
 void draw() {
-  // background(bg);
+  background(bg);
+  image(logo, logoX, logoY);
   cp5.draw();
   pushMatrix();
-  translate(0,UI_yPos[whichMovie-1]);
-  rect (100,0,buttonSizeX,buttonSizeY); // selection state for the buttons
+  translate(patternButton_xyPos[whichMovie-1][0], patternButton_xyPos[whichMovie-1][1]);
+  rect (0,0,patternButtonWidth,patternButtonHeight); // selection state for the buttons
   popMatrix();
  
   
@@ -230,176 +204,77 @@ void draw() {
     case 1:
       pathBase = pathBase1;
       numFrames = duration1;
-      buttonYpos = 350+Yoffset;
       break;
     
     case 2:
       pathBase = pathBase2;
       numFrames = duration2;
-      buttonYpos = 450+Yoffset;
       break;
     
     case 3:
       pathBase = pathBase3;
       numFrames = duration3;
-      buttonYpos = 550+Yoffset;
       break;     
       
     
     case 4:
       pathBase = pathBase4;
       numFrames = duration4;
-      buttonYpos = 650+Yoffset;
       break;   
     
     case 5:
       pathBase = pathBase5;
       numFrames = duration5;
-      buttonYpos = 750+Yoffset;
       break;   
     
     case 6:
       pathBase = pathBase6;
       numFrames = duration6;
-      buttonYpos = 850+Yoffset;
       break;  
     
     case 7:
       pathBase = pathBase7;
       numFrames = duration7;
-      buttonYpos = 950+Yoffset;
       break;  
     
     case 8:
       pathBase = pathBase8;
       numFrames = duration8;
-      buttonYpos = 1050+Yoffset;
       break;  
     
     case 9:
       pathBase = pathBase9;
       numFrames = duration9;
-      buttonYpos = 1150+Yoffset;
       break;  
     
   }
   
   currentFrame = (currentFrame+1) % numFrames;  // Use % to cycle through frames and loop
   String imageName = "sequences/" + pathBase + "/pixelData" + nf(currentFrame, 5) + ".jpg";
-  mainMovie = loadImage(imageName);
-  if (debug) {image (mainMovie,0,0,1002,48);}
+  previewMovie = loadImage(imageName);
+  image (previewMovie,200,150,1200,200);
     
   
-  offScreenBuffer.beginDraw();
-  offScreenBuffer.image(mainMovie, 0, 0,501,24);
+  patternPreviewBuffer.beginDraw();
+  patternPreviewBuffer.image(previewMovie, 0, 0,501,24);
 
-  // if (noStrips) {image(errorScreen, 000, 0,800,1280);} // display error if there are no stripsn detected
-  scrape(); // scrape the offscreen buffer 
+  // if (noStrips) {image(errorScreen, 000, 0,800,1280);} // display error if there are no strips detected
+  //scrape(); // scrape the offscreen buffer 
 
 }
-
-
-
-
 
 // UI selections
 public void controlEvent(ControlEvent theEvent) {
-  
- 
+  String controllerName = theEvent.getController().getName();
+  println("clicked controller: " + controllerName);
+  println("clicked controller: " + controllerName.substring(0,3));
+  int patternNum = 0;
+  if(controllerName.substring(0, 3).equals("seq")) {
+    whichMovie = Integer.parseInt(controllerName.substring(3));
+    currentFrame = 0;
+    println("chose movie #" + whichMovie);
+  }
 }
-
-public void offButton(int theValue) {
-
-  whichMovie = 1;
-  currentFrame = 0;
-
-}
-
-
-public void seq1(int theValue) {
-
-  whichMovie = 2;
-  currentFrame = 0;
-
-
-}
-
-public void seq2(int theValue) {
-
-  whichMovie = 3;
-  currentFrame = 0;
-  
-}
-
-
-
-public void seq3(int theValue) {
-
-  whichMovie = 4;
-  currentFrame = 0;
-
-}
-
-public void seq4(int theValue) {
-
-  whichMovie = 5;
-  currentFrame = 0;
-
-}
-
-public void seq5(int theValue) {
-
-  whichMovie = 6;
-  currentFrame = 0;
-
-
-}
-
-
-
-public void seq6(int theValue) {
-
-  whichMovie = 7;
-  currentFrame = 0;
-
-}
-
-public void seq7(int theValue) {
-
-  whichMovie = 8;
-  currentFrame = 0;
-
-}
-
-public void seq8(int theValue) {
-
-  whichMovie = 9;
-  currentFrame = 0;
-
-}
-
-
-public void seq9(int theValue) {
-
-  whichMovie = 10;
-  currentFrame = 0;
-
-}
-
-public void seq10(int theValue) {
-
-  whichMovie = 11;
-  currentFrame = 0;
-
-}
-
-public void seq11(int theValue) {
-
-  whichMovie = 12;
-  currentFrame = 0;
-
-}
-
 
  
 

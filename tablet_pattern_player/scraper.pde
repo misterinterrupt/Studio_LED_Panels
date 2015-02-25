@@ -3,7 +3,7 @@ void scrape() {
   
   
   float xpos = 0, ypos = 0;
-  offScreenBuffer.loadPixels();
+  patternPreviewBuffer.loadPixels();
   if (observer.hasStrips) {
     registry.startPushing();
     for(int panelIdx = 1; panelIdx < numPanels; panelIdx++) {
@@ -26,7 +26,7 @@ void scrape() {
             // add 0-indexed multiplier of stride for xpos
             xpos = xpos + ((panelIdx - 1) * stride);
             //println ("Group" + panelIdx + " getting pixel from "+xpos + "," + ypos);
-            color c = offScreenBuffer.get((int) xpos, (int)ypos);
+            color c = patternPreviewBuffer.get((int) xpos, (int)ypos);
             strip.setPixel(c, stripx);
             if (stripx == stride || stripx == 333) {
               ypos=ypos+1;
