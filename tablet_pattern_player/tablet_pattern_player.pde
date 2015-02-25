@@ -157,7 +157,7 @@ void setup() {
     .setRange(0,100)
     .setValue(100)
     .setPosition(bright1X, bright1Y)
-    .setSize(patternButtonWidth, 850)
+    .setSize(sendPatternSetWidth, 850)
     .setNumberOfTickMarks(20)
     .snapToTickMarks(true)
     .setDecimalPrecision(0) 
@@ -171,7 +171,7 @@ void setup() {
     .setRange(0,100)
     .setValue(100)
     .setPosition(bright2X, bright2Y)
-    .setSize(patternButtonWidth, 850)
+    .setSize(sendPatternSetWidth, 850)
     .setNumberOfTickMarks(20)
     .snapToTickMarks(true)
     .setDecimalPrecision(0) 
@@ -181,6 +181,31 @@ void setup() {
   cp5.getController("bright2").getValueLabel().align(ControlP5.RIGHT, ControlP5.TOP_OUTSIDE).setPaddingX(0);
   cp5.getController("bright2").getCaptionLabel().align(ControlP5.LEFT, ControlP5.TOP_OUTSIDE).setPaddingX(0);
 
+  // create send to pattern 1 button
+  sendPatternSet1 = cp5.addButton("set1")
+    .setCaptionLabel(set1Label)
+    .setValueLabel(set1Label)
+    .setValue(0)
+    .setPosition(sendPatternSet1X, sendPatternSet1Y)
+    .setSize(sendPatternSetWidth, sendPatternSetHeight)
+    ;
+
+  // reposition the Label for controller 'set1'
+  cp5.getController("set1").getValueLabel().align(ControlP5.RIGHT, ControlP5.TOP_OUTSIDE).setPaddingX(0);
+  cp5.getController("set1").getCaptionLabel().align(ControlP5.LEFT, ControlP5.TOP_OUTSIDE).setPaddingX(0);
+
+  // create send to pattern 2 button
+  sendPatternSet1 = cp5.addButton("set2")
+    .setCaptionLabel(set2Label)
+    .setValueLabel(set2Label)
+    .setValue(0)
+    .setPosition(sendPatternSet2X, sendPatternSet2Y)
+    .setSize(sendPatternSetWidth, sendPatternSetHeight)
+    ;
+
+  // reposition the Label for controller 'set2'
+  cp5.getController("set2").getValueLabel().align(ControlP5.RIGHT, ControlP5.TOP_OUTSIDE).setPaddingX(0);
+  cp5.getController("set2").getCaptionLabel().align(ControlP5.LEFT, ControlP5.TOP_OUTSIDE).setPaddingX(0);
 
 
   // calculate pattern button positions
@@ -203,6 +228,7 @@ void setup() {
       .setValue(0)
       .setPosition(patternButton_xyPos[b][0], patternButton_xyPos[b][1])
       .setSize(patternButtonWidth, patternButtonHeight)
+      .setColorBackground(color(255,255,255,120))
       ;
   }
 
