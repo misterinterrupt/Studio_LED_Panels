@@ -45,8 +45,8 @@ int patternPreviewY = appPaddingHeight;
 
 
 // pattern preview button grid
-int numPatternButtonRows = 3;
-int numPatternButtonCols = 6;
+int numPatternButtonRows = 6;
+int numPatternButtonCols = 3;
 int numPatternButtons = numPatternButtonCols * numPatternButtonRows;
 Button[] patternButtons = new Button[numPatternButtons];
 int buttonGridY = appPaddingHeight + patternPreviewHeight;
@@ -54,20 +54,22 @@ int buttonGridX = appPaddingWidth;
 int patternButtonWidth = 400;
 int patternButtonHeight = 160;
 int buttonGridPaddingRightWidth = 40;
-int buttonGridWidth = (numPatternButtonRows * patternButtonWidth);
+int buttonGridWidth = (numPatternButtonCols * patternButtonWidth);
 int ui_xposMultiplier = patternButtonWidth;
 int ui_yposMultiplier = patternButtonHeight;
 
 // mode button area (color picker to pattern preview & back)
+Button colorPickerModeButton;
 int colorPickerModeWidth = 1200;
 int colorPickerModeHeight = 120;
 int colorPickerModeX = appPaddingWidth;
-int colorPickerModeY = appPaddingHeight + patternPreviewHeight + (numPatternButtonCols * patternButtonHeight);
+int colorPickerModeY = appPaddingHeight + patternPreviewHeight + (numPatternButtonRows * patternButtonHeight);
+String colorPickerModeLabel = "Color Picker";
 
 int patternPreviewModeWidth = 1200;
 int patternPreviewModeHeight = 120;
 int patternPreviewModeX = appPaddingWidth;
-int patternPreviewModeY = appPaddingHeight + patternPreviewHeight + (numPatternButtonCols * patternButtonHeight);
+int patternPreviewModeY = appPaddingHeight + patternPreviewHeight + (numPatternButtonRows * patternButtonHeight);
 
 // logo & underlay
 int logoX = appPaddingWidth + buttonGridWidth + buttonGridPaddingRightWidth;
@@ -172,40 +174,54 @@ public void setup() {
   logo = loadImage("salesforce_logo.png");
   stroke(255);
   noFill();
-  strokeWeight(3); 
+  strokeWeight(1); 
   PFont p = createFont("Gotham-Medium.otf", 30);
   cp5 = new ControlP5(this);
   cp5.setControlFont(p);
   cp5.setAutoDraw(false);
     
+  // create colorpicker mode button
+  colorPickerModeButton = cp5.addButton("colorPickerMode")
+    .setCaptionLabel(colorPickerModeLabel)
+    .setValueLabel(colorPickerModeLabel)
+    .setValue(0)
+    .setPosition(colorPickerModeX, colorPickerModeY)
+    .setSize(colorPickerModeWidth, colorPickerModeHeight)
+    .setColorBackground(color(255,255,255,25))
+    .setColorCaptionLabel(color(17, 84, 130, 255))
+    ;
+
+  // reposition the Label for controller 'colorpickermode'
+  cp5.getController("colorPickerMode").getValueLabel().align(ControlP5.CENTER, ControlP5.CENTER).setPaddingX(0);
+  cp5.getController("colorPickerMode").getCaptionLabel().align(ControlP5.CENTER, ControlP5.CENTER).setPaddingX(0);
   
   bright1 = cp5.addSlider("bright1")
     .setRange(0,100)
     .setValue(100)
     .setPosition(bright1X, bright1Y)
     .setSize(sendPatternSetWidth, 850)
-    .setNumberOfTickMarks(20)
+    .setNumberOfTickMarks(50)
     .snapToTickMarks(true)
-    .setDecimalPrecision(0) 
+    .setDecimalPrecision(0)
     ;
      
   // reposition the Label for controller 'slider'
-  cp5.getController("bright1").getValueLabel().align(ControlP5.RIGHT, ControlP5.TOP_OUTSIDE).setPaddingX(0);
-  cp5.getController("bright1").getCaptionLabel().align(ControlP5.LEFT, ControlP5.TOP_OUTSIDE).setPaddingX(0);
+  cp5.getController("bright1").getValueLabel().align(ControlP5.CENTER, ControlP5.CENTER).setPaddingX(0);
+  cp5.getController("bright1").getCaptionLabel().align(ControlP5.CENTER, ControlP5.CENTER).setPaddingX(0);
 
   bright2 = cp5.addSlider("bright2")
     .setRange(0,100)
     .setValue(100)
     .setPosition(bright2X, bright2Y)
     .setSize(sendPatternSetWidth, 850)
-    .setNumberOfTickMarks(20)
+    .setNumberOfTickMarks(50)
     .snapToTickMarks(true)
     .setDecimalPrecision(0) 
     ;
      
   // reposition the Label for controller 'slider'
-  cp5.getController("bright2").getValueLabel().align(ControlP5.RIGHT, ControlP5.TOP_OUTSIDE).setPaddingX(0);
-  cp5.getController("bright2").getCaptionLabel().align(ControlP5.LEFT, ControlP5.TOP_OUTSIDE).setPaddingX(0);
+  cp5.getController("bright2").getValueLabel().align(ControlP5.CENTER, ControlP5.CENTER).setPaddingX(0);
+  cp5.getController("bright2").getCaptionLabel().align(ControlP5.CENTER, ControlP5.CENTER).setPaddingX(0);
 
   // create send to pattern 1 button
   sendPatternSet1 = cp5.addButton("set1")
@@ -217,8 +233,8 @@ public void setup() {
     ;
 
   // reposition the Label for controller 'set1'
-  cp5.getController("set1").getValueLabel().align(ControlP5.RIGHT, ControlP5.TOP_OUTSIDE).setPaddingX(0);
-  cp5.getController("set1").getCaptionLabel().align(ControlP5.LEFT, ControlP5.TOP_OUTSIDE).setPaddingX(0);
+  cp5.getController("set1").getValueLabel().align(ControlP5.CENTER, ControlP5.CENTER).setPaddingX(0);
+  cp5.getController("set1").getCaptionLabel().align(ControlP5.CENTER, ControlP5.CENTER).setPaddingX(0);
 
   // create send to pattern 2 button
   sendPatternSet1 = cp5.addButton("set2")
@@ -230,15 +246,15 @@ public void setup() {
     ;
 
   // reposition the Label for controller 'set2'
-  cp5.getController("set2").getValueLabel().align(ControlP5.RIGHT, ControlP5.TOP_OUTSIDE).setPaddingX(0);
-  cp5.getController("set2").getCaptionLabel().align(ControlP5.LEFT, ControlP5.TOP_OUTSIDE).setPaddingX(0);
+  cp5.getController("set2").getValueLabel().align(ControlP5.CENTER, ControlP5.CENTER).setPaddingX(0);
+  cp5.getController("set2").getCaptionLabel().align(ControlP5.CENTER, ControlP5.CENTER).setPaddingX(0);
 
 
   // calculate pattern button positions
-  for(int j=0; j< numPatternButtonRows; j++) {
-    for (int i=0; i < numPatternButtonCols; i++) {
-      int idx = (i+(j*numPatternButtonCols));
-      patternButton_xyPos[idx][0] = buttonGridX + (ui_xposMultiplier * j);
+  for(int j=0; j < numPatternButtonCols; j++) { // X
+    for (int i=0; i < numPatternButtonRows; i++) { // Y
+      int idx = (i+(j*numPatternButtonRows));
+      patternButton_xyPos[idx][0] = (buttonGridX + (ui_xposMultiplier * j));
       patternButton_xyPos[idx][1] = (buttonGridY + (ui_yposMultiplier * i));
       //println((idx) + " - x:"+patternButton_xyPos[idx][0]+" y:"+patternButton_xyPos[idx][1]);
     }
@@ -247,15 +263,22 @@ public void setup() {
   // create & draw the button grid butrons
   for(int b=0; b<numPatternButtons; b++) {
     String label = "Pattern #" + (b+1);
-    patternButtons[b] = cp5.addButton("seq" + (b+1))
+    String name = "seq" + (b+1);
+    patternButtons[b] = cp5.addButton(name)
       .setCaptionLabel(label)
       .setValueLabel(label)
-      .setStringValue(label)
+      .setStringValue(name)
       .setValue(0)
+      .setSwitch(true)
       .setPosition(patternButton_xyPos[b][0], patternButton_xyPos[b][1])
       .setSize(patternButtonWidth, patternButtonHeight)
-      .setColorBackground(0xFFFFFFEE)
+      .setColorCaptionLabel(color(17, 84, 130, 255))
+      .setColorActive(color(255,255,255,150))
+      .setColorBackground(color(255,255,255,40))
       ;
+      // reposition the Label for controllers named 'seq'+(b+1)
+      cp5.getController(name).getValueLabel().align(ControlP5.CENTER, ControlP5.CENTER).setPaddingX(0);
+      cp5.getController(name).getCaptionLabel().align(ControlP5.CENTER, ControlP5.CENTER).setPaddingX(0);
   }
 
   chosenMovie=1; //default
@@ -272,11 +295,38 @@ public void draw() {
   background(bg);
   image(logo, logoX, logoY);
   cp5.draw();
+  // draw selected state
   pushMatrix();
-  translate(patternButton_xyPos[chosenMovie-1][0], patternButton_xyPos[chosenMovie-1][1]);
-  rect (0,0,patternButtonWidth,patternButtonHeight); // selection state for the buttons
+    translate(patternButton_xyPos[chosenMovie-1][0], patternButton_xyPos[chosenMovie-1][1]);
+    rect (0, 0, patternButtonWidth,patternButtonHeight); // selection state for the buttons
   popMatrix();
- 
+  // draw logo frame
+  pushMatrix();
+    translate(logoFrameX, logoFrameY);
+    noStroke();
+    fill(255, 255, 255, 25);
+    rect(0, 0, logoFrameWidth, logoFrameHeight);
+  popMatrix();
+
+  // draw grid lines
+  pushMatrix();
+    noFill();
+    stroke(0, 0, 0, 25);
+    translate(buttonGridX, buttonGridY);
+    // vertical lines
+    for(int j=0; j<numPatternButtonCols; j++) {
+      if((j > 0) && (j < numPatternButtonCols)) {
+        line(patternButtonWidth*j, 0, patternButtonWidth*j, numPatternButtonRows * patternButtonHeight);
+      }
+    }
+    // horizontal lines
+    for(int k=0; k<numPatternButtonRows; k++) {
+      if((k > 0) && (k < numPatternButtonRows)) {
+        line(0, patternButtonHeight*k, numPatternButtonCols * patternButtonWidth, patternButtonHeight*k);
+      }
+    }
+  popMatrix();
+  
   
   switch(chosenMovie){ // sets the path and duration of the PNG sequence based on the button selection
     
@@ -348,17 +398,30 @@ public void controlEvent(ControlEvent theEvent) {
   String controllerName = theEvent.getController().getName();
   //println("clicked controller: " + controllerName);
   if(controllerName.substring(0, 3).equals("seq")) {
-    onPreviewButtonPress(theEvent);
+    onPreviewButtonPress(theEvent, controllerName);
   }
 }
 
-public void onPreviewButtonPress(ControlEvent buttonEvent) {
+public void onPreviewButtonPress(ControlEvent buttonEvent, String controllerName) {
 
+  // for(int i=0; i<patternButtons.length; i++) {
+    
+  //   if(patternButtons[i].isOn()) {
+    
+  //     patternButtons[i].setOff();
+  //     println("setting off.. " + patternButtons[i].getStringValue());
+  //   }
+  //   if(patternButtons[i].getStringValue() == controllerName) {
+    
+  //     println("pressed " + controllerName);
+  //     patternButtons[i].setOn();
+  //   }
+  // }
   int patternNum = Integer.parseInt(buttonEvent.getController().getName().substring(3));
   chosenMovie = patternNum;
   currentFrame = 0;
   //println("chose movie #" + chosenMovie);
-} 
+}
 
 public void spamCommand(PixelPusher p, PusherCommand pc) {
    for (int i=0; i<3; i++) {
