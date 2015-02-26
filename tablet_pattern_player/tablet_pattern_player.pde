@@ -152,12 +152,18 @@ int stride = 167; // number of LEDs per row aka striplength
 int panelDisplayHeight = 24;
 float xscale = 1; // horizontal scale factor
 int combinedPanelDisplayWidth = (numPanelsSet1 + numPanelsSet2) * stride;
+int set1DisplayWidth = numPanelsSet1 * stride;
+int set2DisplayWidth = numPanelsSet2 * stride;
 
-// define each set by group start and group end indexes
+// sets must be in numerical order
+// define each pixel pusher powered panel set by group start and group end indexes
 int[][] panelSets = {{1,4},{5,6}};
+int[][] panelSetBuffers = {set1Buffer, set2Buffer};
+
+// this is unused, just leaving it here for the future
 // this order array will be indexed by the limits in the sets variable,
 // the values represent the order that the controller groups are scraped to
-int[][] order = {{1,1}, {2,2}, {3,3}, {4,4}, {5,5}, {6,6}};
+//int[][] order = {{1,1}, {2,2}, {3,3}, {4,4}, {5,5}, {6,6}};
 
 PImage bg;
 PImage logo;
@@ -168,9 +174,11 @@ void setup() {
 
   size(2560, 1600);
   frameRate(15);
+
   patternPreviewBuffer = createGraphics(combinedPanelDisplayWidth, panelDisplayHeight, JAVA2D); // buffer with the same number of pixels as the wall
   set1Buffer = createGraphics(combinedPanelDisplayWidth, panelDisplayHeight, JAVA2D);
   set2Buffer = createGraphics(combinedPanelDisplayWidth, panelDisplayHeight, JAVA2D);
+
   bg = loadImage("skyflares_bg.png");
   logo = loadImage("salesforce_logo.png");
   stroke(255);
