@@ -36,8 +36,14 @@ void scrape() {
               // add 0-indexed multiplier of stride for xpos
               xpos = xpos + ((panelIdx - 1) * stride);
               //println ("Group" + panelIdx + " getting pixel from "+xpos + "," + ypos);
-              color c = panelSetBuffers[setIdx].get((int) xpos, (int)ypos);
-              strip.setPixel(c, stripx);
+              color c = panelSetBuffers[setIdx].pixels[(int) xpos * (int) ypos];
+              
+              if(debug){
+                debugBuffers[setIdx].setPixel(c);
+              } else {
+                strip.setPixel(c, stripx);
+              }
+
               if (stripx == stride || stripx == 333) {
                 ypos=ypos+1;
               } // move to the next yPos of the buffer

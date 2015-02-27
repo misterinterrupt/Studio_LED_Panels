@@ -1,3 +1,5 @@
+boolean debug = false;
+
 import com.heroicrobot.dropbit.registry.*;
 import com.heroicrobot.dropbit.devices.pixelpusher.Pixel;
 import com.heroicrobot.dropbit.devices.pixelpusher.Strip;
@@ -146,6 +148,7 @@ PGraphics patternPreviewBuffer;
 PGraphics set1Buffer;
 PGraphics set2Buffer;
 
+int numSets = 2;
 int numPanelsSet1 = 3;
 int numPanelsSet2 = 3;
 int stride = 167; // number of LEDs per row aka striplength
@@ -159,6 +162,7 @@ int set2DisplayWidth = numPanelsSet2 * stride;
 // define each pixel pusher powered panel set by group start and group end indexes
 int[][] panelSets = {{1,4},{5,6}};
 int[][] panelSetBuffers = {set1Buffer, set2Buffer};
+int[][] debugBuffers = {debug1Buffer, debug2Buffer};
 
 // this is unused, just leaving it here for the future
 // this order array will be indexed by the limits in the sets variable,
@@ -171,6 +175,20 @@ PImage errorScreen;
 
 
 void setup() {
+
+  // load configs
+  String setConfig[] = loadStrings("setconfig.txt");
+  println("there are " + lines.length + " sets");
+  for (int i = 0 ; i < numSets; i++) {
+    String[] savedset = str.split(",");
+    panelSets[i] = new int[] {savedset[0].parseInt(), savedset[1].parseInt()};
+    println(lines[i]);
+  }
+  // String lastSends[] = loadStrings("lastsends.txt");
+  // println("there was " + lines.length + " saved send(s)");
+  // for (int i = 0 ; i < lines.length; i++) {
+  //   println(lines[i]);
+  // }
 
   size(2560, 1600);
   frameRate(15);
@@ -342,6 +360,7 @@ void draw() {
   background(bg);
   image(logo, logoX, logoY);
   cp5.draw();
+
   // draw a selected state
   pushMatrix();
     fill(255, 255, 255, 80);
