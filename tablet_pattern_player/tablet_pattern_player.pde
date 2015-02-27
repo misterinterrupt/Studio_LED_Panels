@@ -12,14 +12,16 @@ import controlP5.*;
 public class Sequence {
   public int count;
   public String path;
-  public Sequence(String path, int count)
+  public String name;
+  public Sequence(String name, String path, int count)
   {
    this.count = count;
    this.path = path;
+   this.name = name;
   }
   public String toString()
   {
-    return "Sequence  [path: " + this.path + " count: " + this.count + "]";
+    return "Sequence  [name: " + this.name + " path: " + this.path + " count: " + this.count + "]";
   }
 }
 
@@ -126,7 +128,7 @@ int currentFrame = 0;
 String pathBase1 = "blanks";
 int duration1 = 1;
 
-Sequence[] sequencePaths;
+ArrayList<Sequence> sequencePaths;
 
 String pathBase = pathBase1; // set start pattern to "all off"
 int numFrames = duration1;
@@ -187,31 +189,7 @@ void setup() {
   //   println(lines[i]);
   // }
 
-  // load sequence paths and count their durations 
-  File folder = new File(dataPath("sequences"));
-  String[] seqs = folder.list();
-  sequencePaths = new Sequence[seqs.length];
-  int seqIdx = 0; // keep our own count for indexing into the sequencePaths array since hidden files will make our loop skip 
-  if(null != seqs) {
-    for (int i = 0; i < seqs.length; i++) {
-      File f = new File(seqs[i]);
-      int count = 0;
-      if(!f.isHidden()) {
-        String frameDir = dataPath("sequences") + f.separatorChar + f.getPath();
-        File[] frames = new File(frameDir).listFiles();
-        if(null != frames) {
-          count = frames.length;
-        }
-        //println(frameDir);
-        sequencePaths[seqIdx++] = new Sequence(frameDir, count);
-      }
-    }
-    println(sequencePaths.toString());
-  } else {
-    println("no sequences");
-    exit();
-  }
-
+  loadSequences();
 
   println("starting");
   size(2560, 1600);
@@ -346,17 +324,17 @@ void setup() {
     }
   }  
 
-  numPatternButtons = sequencePaths.length;
+  numPatternButtons = sequencePaths.size();
+println(numPatternButtons);
   // create & draw the button grid buttons
   for(int b=0; b<numPatternButtons; b++) {
-    String label = "Pattern #" + (b+1);
-    String name = "seq" + (b+1);
+    String label = sequencePaths.get(b).name;
+    String name = "seq" + b;
     patternButtons[b] = cp5.addButton(name)
       .setCaptionLabel(label)
       .setValueLabel(label)
       .setStringValue(name)
       .setValue(0)
-      //.setSwitch(true)
       .activateBy(ControlP5.RELEASE)
       .setPosition(patternButton_xyPos[b][0], patternButton_xyPos[b][1])
       .setSize(patternButtonWidth, patternButtonHeight)
@@ -370,7 +348,7 @@ void setup() {
       cp5.getController(name).getCaptionLabel().align(ControlP5.CENTER, ControlP5.CENTER).setPaddingX(0);
   }
 
-  chosenMovie=1; //default
+  chosenMovie=0; //default
   registry = new DeviceRegistry();
   observer = new PusherObserver();
   registry.addObserver(observer);
@@ -389,7 +367,7 @@ void draw() {
   // draw a selected state
   pushMatrix();
     fill(255, 255, 255, 80);
-    translate(patternButton_xyPos[chosenMovie-1][0], patternButton_xyPos[chosenMovie-1][1]);
+    translate(patternButton_xyPos[chosenMovie][0], patternButton_xyPos[chosenMovie][1]);
     rect (0, 0, patternButtonWidth, patternButtonHeight); // selection state for the buttons
     // TODO:: make an overlay text 
   popMatrix();
@@ -421,8 +399,8 @@ void draw() {
     }
   popMatrix();
   
-  currentFrame = (currentFrame+1) % sequencePaths[chosenMovie-1].count;  // Use % to cycle through frames and loop
-  String imageName = sequencePaths[chosenMovie-1].path + "/pixelData" + nf(currentFrame, 5) + ".jpg";
+  currentFrame = (currentFrame+1) % sequencePaths.get(chosenMovie).count;  // Use % to cycle through frames and loop
+  String imageName = sequencePaths.get(chosenMovie).path + "/pixelData" + nf(currentFrame, 5) + ".jpg";
 
   previewMovie = loadImage(imageName);
   debug1Buffer = createGraphics(1200, 200);
@@ -444,6 +422,20 @@ void draw() {
   image(debug1Buffer, 0, 0, 1200, 200);
 }
 
+public void bright(float globalBright) { // takes a brightness value between 0 - 100 
+  
+  float newBright = map (globalBright,0,100,0,65535);
+  
+   List<PixelPusher> pushers = registry.getPushers();
+  
+    for (PixelPusher p: pushers) {
+       PusherCommand pc = new PusherCommand(PusherCommand.GLOBALBRIGHTNESS_SET,(short) (newBright));
+       spamCommand(p,  pc);
+    } 
+   
+ // println ("brightness = " + newBright);
+}
+
 // UI selections
 public void controlEvent(ControlEvent theEvent) {
 
@@ -451,6 +443,33 @@ public void controlEvent(ControlEvent theEvent) {
   //println("clicked controller: " + controllerName);
   if(controllerName.substring(0, 3).equals("seq")) {
     onPreviewButtonPress(theEvent);
+  }
+}
+
+public void loadSequences() {
+  // load sequence paths and count their durations 
+  File folder = new File(dataPath("sequences"));
+  String[] seqs = folder.list();
+  sequencePaths = new ArrayList(seqs.length);
+  int seqIdx = 0; // keep our own count for indexing into the sequencePaths array since hidden files will make our loop skip 
+  if(null != seqs) {
+    for (int i = 0; i < seqs.length; i++) {
+      File f = new File(seqs[i]);
+      int count = 0;
+      if(!f.isHidden()) {
+        String frameDir = dataPath("sequences") + f.separatorChar + f.getPath();
+        File[] frames = new File(frameDir).listFiles();
+        if(null != frames) {
+          count = frames.length;
+        }
+        println(seqIdx + " " + frameDir);
+        sequencePaths.add(seqIdx++, new Sequence(f.getPath(), frameDir, count));
+      }
+    }
+  sequencePaths.trimToSize();
+  } else {
+    println("no sequences");
+    exit();
   }
 }
 
@@ -469,30 +488,14 @@ public void onPreviewButtonPress(ControlEvent buttonEvent) {
   int patternNum = Integer.parseInt(buttonEvent.getController().getName().substring(3));
   chosenMovie = patternNum;
   currentFrame = 0;
-  //println("chose movie #" + chosenMovie);
+  println("chose movie #" + chosenMovie);
 }
 
-void spamCommand(PixelPusher p, PusherCommand pc) {
+public void spamCommand(PixelPusher p, PusherCommand pc) {
    for (int i=0; i<3; i++) {
     p.sendCommand(pc);
   }
 }
-
-
-void bright(float globalBright) { // takes a brightness value between 0 - 100 
-  
-  float newBright = map (globalBright,0,100,0,65535);
-  
-   List<PixelPusher> pushers = registry.getPushers();
-  
-    for (PixelPusher p: pushers) {
-       PusherCommand pc = new PusherCommand(PusherCommand.GLOBALBRIGHTNESS_SET,(short) (newBright));
-       spamCommand(p,  pc);
-    } 
-   
- // println ("brightness = " + newBright);
-}
-
 
 
 
