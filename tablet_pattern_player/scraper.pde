@@ -39,7 +39,9 @@ void scrape() {
               color c = panelSetBuffers[setIdx].pixels[(int) xpos * (int) ypos];
               
               if(debug){
-                debugBuffers[setIdx].setPixel(c);
+                // this prolly doesn't work yet..
+                debugBuffers[setIdx].pixels[(int) xpos * (int) ypos] = c;
+                //debugBuffers[setIdx].updatePixels();
               } else {
                 strip.setPixel(c, stripx);
               }

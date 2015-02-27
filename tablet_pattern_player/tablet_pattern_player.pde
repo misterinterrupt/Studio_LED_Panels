@@ -6,7 +6,22 @@ import com.heroicrobot.dropbit.devices.pixelpusher.Strip;
 import com.heroicrobot.dropbit.devices.pixelpusher.PixelPusher;
 import com.heroicrobot.dropbit.devices.pixelpusher.PusherCommand;
 import java.util.*;
+import java.io.File;
 import controlP5.*;
+
+public class Sequence {
+  public int count;
+  public String path;
+  public Sequence(String path, int count)
+  {
+   this.count = count;
+   this.path = path;
+  }
+  public String toString()
+  {
+    return "Sequence  [path: " + this.path + " count: " + this.count + "]";
+  }
+}
 
 ControlP5 cp5;
 
@@ -111,35 +126,14 @@ int currentFrame = 0;
 String pathBase1 = "blanks";
 int duration1 = 1;
 
-String pathBase2 = "seq1";
-int duration2 = 1680;
-
-String pathBase3 = "seq2";
-int duration3 = 1800;
-    
-String pathBase4 = "seq3";
-int duration4 = 1800;
-   
-String pathBase5 = "seq4";
-int duration5 = 1800;
-   
-String pathBase6 = "seq5";
-int duration6 = 1800;
-   
-String pathBase7 = "seq6";
-int duration7 = 1799;
- 
-String pathBase8 = "seq7";
-int duration8 = 454;
-
-String pathBase9 = "seq8";
-int duration9 = 150;
-
+Sequence[] sequencePaths;
 
 String pathBase = pathBase1; // set start pattern to "all off"
 int numFrames = duration1;
-PImage previewMovie;
 
+PImage previewMovie;
+PImage previewMovie2;
+PImage previewMovie3;
 
 
 DeviceRegistry registry;
@@ -147,6 +141,8 @@ PusherObserver observer;
 PGraphics patternPreviewBuffer;
 PGraphics set1Buffer;
 PGraphics set2Buffer;
+PGraphics debug1Buffer;
+PGraphics debug2Buffer;
 
 int numSets = 2;
 int numPanelsSet1 = 3;
@@ -161,8 +157,9 @@ int set2DisplayWidth = numPanelsSet2 * stride;
 // sets must be in numerical order
 // define each pixel pusher powered panel set by group start and group end indexes
 int[][] panelSets = {{1,4},{5,6}};
-int[][] panelSetBuffers = {set1Buffer, set2Buffer};
-int[][] debugBuffers = {debug1Buffer, debug2Buffer};
+//PImage[] panelSetBuffers = {set1Buffer, set2Buffer};
+PImage[] panelSetBuffers = {patternPreviewBuffer, patternPreviewBuffer};
+PImage[] debugBuffers = {debug1Buffer, debug2Buffer};
 
 // this is unused, just leaving it here for the future
 // this order array will be indexed by the limits in the sets variable,
@@ -178,11 +175,11 @@ void setup() {
 
   // load configs
   String setConfig[] = loadStrings("setconfig.txt");
-  println("there are " + lines.length + " sets");
+  println("there are " + setConfig.length + " sets");
   for (int i = 0 ; i < numSets; i++) {
-    String[] savedset = str.split(",");
-    panelSets[i] = new int[] {savedset[0].parseInt(), savedset[1].parseInt()};
-    println(lines[i]);
+    String[] savedset = setConfig[i].split(",");
+    panelSets[i] = new int[] {Integer.parseInt(savedset[0]), Integer.parseInt(savedset[1])};
+    println(setConfig[i]);
   }
   // String lastSends[] = loadStrings("lastsends.txt");
   // println("there was " + lines.length + " saved send(s)");
@@ -190,12 +187,41 @@ void setup() {
   //   println(lines[i]);
   // }
 
+  // load sequence paths and count their durations 
+  File folder = new File(dataPath("sequences"));
+  String[] seqs = folder.list();
+  sequencePaths = new Sequence[seqs.length];
+  int seqIdx = 0; // keep our own count for indexing into the sequencePaths array since hidden files will make our loop skip 
+  if(null != seqs) {
+    for (int i = 0; i < seqs.length; i++) {
+      File f = new File(seqs[i]);
+      int count = 0;
+      if(!f.isHidden()) {
+        String frameDir = dataPath("sequences") + f.separatorChar + f.getPath();
+        File[] frames = new File(frameDir).listFiles();
+        if(null != frames) {
+          count = frames.length;
+        }
+        //println(frameDir);
+        sequencePaths[seqIdx++] = new Sequence(frameDir, count);
+      }
+    }
+    println(sequencePaths.toString());
+  } else {
+    println("no sequences");
+    exit();
+  }
+
+
+  println("starting");
   size(2560, 1600);
   frameRate(15);
 
   patternPreviewBuffer = createGraphics(combinedPanelDisplayWidth, panelDisplayHeight, JAVA2D); // buffer with the same number of pixels as the wall
-  set1Buffer = createGraphics(combinedPanelDisplayWidth, panelDisplayHeight, JAVA2D);
-  set2Buffer = createGraphics(combinedPanelDisplayWidth, panelDisplayHeight, JAVA2D);
+  set1Buffer = createGraphics(set1DisplayWidth, panelDisplayHeight, JAVA2D);
+  set2Buffer = createGraphics(set2DisplayWidth, panelDisplayHeight, JAVA2D);
+  debug1Buffer = createGraphics(set1DisplayWidth, panelDisplayHeight, JAVA2D);
+  debug2Buffer = createGraphics(set2DisplayWidth, panelDisplayHeight, JAVA2D);
 
   bg = loadImage("skyflares_bg.png");
   logo = loadImage("salesforce_logo.png");
@@ -318,11 +344,9 @@ void setup() {
       patternButton_xyPos[idx][1] = (buttonGridY + (ui_yposMultiplier * i));
       //println((idx) + " - x:"+patternButton_xyPos[idx][0]+" y:"+patternButton_xyPos[idx][1]);
     }
-  }
+  }  
 
-  // TODO:: make seq names dynamic
-  
-
+  numPatternButtons = sequencePaths.length;
   // create & draw the button grid buttons
   for(int b=0; b<numPatternButtons; b++) {
     String label = "Pattern #" + (b+1);
@@ -357,6 +381,7 @@ void setup() {
 
 
 void draw() {
+
   background(bg);
   image(logo, logoX, logoY);
   cp5.draw();
@@ -396,76 +421,34 @@ void draw() {
     }
   popMatrix();
   
-  
-  switch(chosenMovie){ // sets the path and duration of the PNG sequence based on the button selection
-    
-    case 1:
-      pathBase = pathBase1;
-      numFrames = duration1;
-      break;
-    
-    case 2:
-      pathBase = pathBase2;
-      numFrames = duration2;
-      break;
-    
-    case 3:
-      pathBase = pathBase3;
-      numFrames = duration3;
-      break;     
-      
-    
-    case 4:
-      pathBase = pathBase4;
-      numFrames = duration4;
-      break;   
-    
-    case 5:
-      pathBase = pathBase5;
-      numFrames = duration5;
-      break;   
-    
-    case 6:
-      pathBase = pathBase6;
-      numFrames = duration6;
-      break;  
-    
-    case 7:
-      pathBase = pathBase7;
-      numFrames = duration7;
-      break;  
-    
-    case 8:
-      pathBase = pathBase8;
-      numFrames = duration8;
-      break;  
-    
-    case 9:
-      pathBase = pathBase9;
-      numFrames = duration9;
-      break;  
-    
-  }
-  
-  currentFrame = (currentFrame+1) % numFrames;  // Use % to cycle through frames and loop
-  String imageName = "sequences/" + pathBase + "/pixelData" + nf(currentFrame, 5) + ".jpg";
+  currentFrame = (currentFrame+1) % sequencePaths[chosenMovie-1].count;  // Use % to cycle through frames and loop
+  String imageName = sequencePaths[chosenMovie-1].path + "/pixelData" + nf(currentFrame, 5) + ".jpg";
+
   previewMovie = loadImage(imageName);
-  image (previewMovie,200,150,1200,200);
-    
-  
+  debug1Buffer = createGraphics(1200, 200);
+  debug2Buffer = createGraphics(1200, 200);
+
+  image(previewMovie, 200, 150, 1200, 200);  
   patternPreviewBuffer.beginDraw();
+  
+
+  debug2Buffer.beginDraw();
+  debug2Buffer.background(0);
+  debug2Buffer.endDraw();
+  image(debug2Buffer, 1300, 0, 1200, 200);
+
   patternPreviewBuffer.image(previewMovie, 0, 0,501,24);
-
   // if (noStrips) {image(errorScreen, 000, 0,800,1280);} // display error if there are no strips detected
-  //scrape(); // scrape the offscreen buffer 
-
+  scrape(); // scrape the offscreen buffer
+  debug1Buffer.loadPixels();
+  image(debug1Buffer, 0, 0, 1200, 200);
 }
 
 // UI selections
 public void controlEvent(ControlEvent theEvent) {
 
   String controllerName = theEvent.getController().getName();
-  println("clicked controller: " + controllerName);
+  //println("clicked controller: " + controllerName);
   if(controllerName.substring(0, 3).equals("seq")) {
     onPreviewButtonPress(theEvent);
   }
