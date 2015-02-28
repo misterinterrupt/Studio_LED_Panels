@@ -1,5 +1,3 @@
-boolean debug = false;
-
 import com.heroicrobot.dropbit.registry.*;
 import com.heroicrobot.dropbit.devices.pixelpusher.Pixel;
 import com.heroicrobot.dropbit.devices.pixelpusher.Strip;
@@ -121,7 +119,8 @@ Button setLabel2;
 int[][] patternButton_xyPos = new int[numPatternButtons][2];  // pattern button draw positions, array of [x,y]
 
 boolean noStrips = true;
-int chosenMovie=1;
+int chosenMovie1=1;
+int chosenMovie2=9;
 int currentFrame = 0;
 
 // setup file path a durations for the image sequences
@@ -133,18 +132,14 @@ ArrayList<Sequence> sequencePaths;
 String pathBase = pathBase1; // set start pattern to "all off"
 int numFrames = duration1;
 
-PImage previewMovie;
+PImage previewMovie1;
 PImage previewMovie2;
-PImage previewMovie3;
 
 
 DeviceRegistry registry;
 PusherObserver observer;
 PGraphics patternPreviewBuffer;
 PGraphics set1Buffer;
-PGraphics set2Buffer;
-PGraphics debug1Buffer;
-PGraphics debug2Buffer;
 
 int numSets = 2;
 int numPanelsSet1 = 3;
@@ -159,9 +154,7 @@ int set2DisplayWidth = numPanelsSet2 * stride;
 // sets must be in numerical order
 // define each pixel pusher powered panel set by group start and group end indexes
 int[][] panelSets = {{1,4},{5,6}};
-//PImage[] panelSetBuffers = {set1Buffer, set2Buffer};
-PImage[] panelSetBuffers = {patternPreviewBuffer, patternPreviewBuffer};
-PImage[] debugBuffers = {debug1Buffer, debug2Buffer};
+PImage[] panelSetBuffers = new PImage[2];
 
 // this is unused, just leaving it here for the future
 // this order array will be indexed by the limits in the sets variable,
@@ -175,6 +168,7 @@ PImage errorScreen;
 
 void setup() {
 
+  
   // load configs
   String setConfig[] = loadStrings("setconfig.txt");
   println("there are " + setConfig.length + " sets");
@@ -183,6 +177,7 @@ void setup() {
     panelSets[i] = new int[] {Integer.parseInt(savedset[0]), Integer.parseInt(savedset[1])};
     println(setConfig[i]);
   }
+  println("panelSets.length:" + panelSets.length);
   // String lastSends[] = loadStrings("lastsends.txt");
   // println("there was " + lines.length + " saved send(s)");
   // for (int i = 0 ; i < lines.length; i++) {
@@ -196,10 +191,10 @@ void setup() {
   frameRate(15);
 
   patternPreviewBuffer = createGraphics(combinedPanelDisplayWidth, panelDisplayHeight, JAVA2D); // buffer with the same number of pixels as the wall
-  set1Buffer = createGraphics(set1DisplayWidth, panelDisplayHeight, JAVA2D);
-  set2Buffer = createGraphics(set2DisplayWidth, panelDisplayHeight, JAVA2D);
-  debug1Buffer = createGraphics(set1DisplayWidth, panelDisplayHeight, JAVA2D);
-  debug2Buffer = createGraphics(set2DisplayWidth, panelDisplayHeight, JAVA2D);
+  set1Buffer = createGraphics(combinedPanelDisplayWidth, panelDisplayHeight, JAVA2D);
+
+  panelSetBuffers[0] = patternPreviewBuffer;
+  panelSetBuffers[1] = patternPreviewBuffer;
 
   bg = loadImage("skyflares_bg.png");
   logo = loadImage("salesforce_logo.png");
@@ -325,7 +320,6 @@ void setup() {
   }  
 
   numPatternButtons = sequencePaths.size();
-println(numPatternButtons);
   // create & draw the button grid buttons
   for(int b=0; b<numPatternButtons; b++) {
     String label = sequencePaths.get(b).name;
@@ -348,7 +342,6 @@ println(numPatternButtons);
       cp5.getController(name).getCaptionLabel().align(ControlP5.CENTER, ControlP5.CENTER).setPaddingX(0);
   }
 
-  chosenMovie=0; //default
   registry = new DeviceRegistry();
   observer = new PusherObserver();
   registry.addObserver(observer);
@@ -367,7 +360,7 @@ void draw() {
   // draw a selected state
   pushMatrix();
     fill(255, 255, 255, 80);
-    translate(patternButton_xyPos[chosenMovie][0], patternButton_xyPos[chosenMovie][1]);
+    translate(patternButton_xyPos[chosenMovie1][0], patternButton_xyPos[chosenMovie1][1]);
     rect (0, 0, patternButtonWidth, patternButtonHeight); // selection state for the buttons
     // TODO:: make an overlay text 
   popMatrix();
@@ -398,28 +391,27 @@ void draw() {
       }
     }
   popMatrix();
-  
-  currentFrame = (currentFrame+1) % sequencePaths.get(chosenMovie).count;  // Use % to cycle through frames and loop
-  String imageName = sequencePaths.get(chosenMovie).path + "/pixelData" + nf(currentFrame, 5) + ".jpg";
 
-  previewMovie = loadImage(imageName);
-  debug1Buffer = createGraphics(1200, 200);
-  debug2Buffer = createGraphics(1200, 200);
 
-  image(previewMovie, 200, 150, 1200, 200);  
+  //println(sequencePaths.get(chosenMovie1).path + "/pixelData" + nf(currentFrame, 5) + ".jpg");
+  String imageName1 = sequencePaths.get(chosenMovie1).path + "/pixelData" + nf(currentFrame, 5) + ".jpg";
+  String imageName2 = sequencePaths.get(chosenMovie2).path + "/pixelData" + nf(currentFrame, 5) + ".jpg";
+  currentFrame = (currentFrame+1) % sequencePaths.get(chosenMovie1).count;  // Use % to cycle through frames and loop
+
+  previewMovie1 = loadImage(imageName1);
+  previewMovie2 = loadImage(imageName2);
+
+  image(previewMovie1, 200, 150, 1200, 200);
+  image(previewMovie2, 0, 0, 1200, 200);
+
   patternPreviewBuffer.beginDraw();
-  
+  set1Buffer.beginDraw();
 
-  debug2Buffer.beginDraw();
-  debug2Buffer.background(0);
-  debug2Buffer.endDraw();
-  image(debug2Buffer, 1300, 0, 1200, 200);
-
-  patternPreviewBuffer.image(previewMovie, 0, 0,501,24);
+  patternPreviewBuffer.image(previewMovie1, 0, 0,501,24);
+  set1Buffer.image(previewMovie2, 0, 0,501,24);
+  //image(set1Buffer, 0, 0, 501, 24);
   // if (noStrips) {image(errorScreen, 000, 0,800,1280);} // display error if there are no strips detected
   scrape(); // scrape the offscreen buffer
-  debug1Buffer.loadPixels();
-  image(debug1Buffer, 0, 0, 1200, 200);
 }
 
 public void bright(float globalBright) { // takes a brightness value between 0 - 100 
@@ -486,9 +478,9 @@ public void onPreviewButtonPress(ControlEvent buttonEvent) {
   // }
   // cp5.getController(buttonEvent.getController().getName()).setOn();
   int patternNum = Integer.parseInt(buttonEvent.getController().getName().substring(3));
-  chosenMovie = patternNum;
+  chosenMovie1 = patternNum;
   currentFrame = 0;
-  println("chose movie #" + chosenMovie);
+  println("chose movie #" + chosenMovie1);
 }
 
 public void spamCommand(PixelPusher p, PusherCommand pc) {
