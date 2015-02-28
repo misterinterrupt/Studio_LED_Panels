@@ -118,28 +118,24 @@ Button setLabel2;
 
 int[][] patternButton_xyPos = new int[numPatternButtons][2];  // pattern button draw positions, array of [x,y]
 
-boolean noStrips = true;
-int chosenMovie1=1;
-int chosenMovie2=9;
-int currentFrame = 0;
-
-// setup file path a durations for the image sequences
-String pathBase1 = "blanks";
-int duration1 = 1;
-
 ArrayList<Sequence> sequencePaths;
-
-String pathBase = pathBase1; // set start pattern to "all off"
-int numFrames = duration1;
-
+int chosenPreviewMovie=1;
+int chosenMovie1=9;
+int chosenMovie2=9;
+int currentFrame1 = -1;
+int currentFrame2 = -1;
+int currentFrame3 = -1;
 PImage previewMovie1;
 PImage previewMovie2;
+PImage previewMovie3;
 
 
+boolean noStrips = true;
 DeviceRegistry registry;
 PusherObserver observer;
 PGraphics patternPreviewBuffer;
 PGraphics set1Buffer;
+PGraphics set2Buffer;
 
 int numSets = 2;
 int numPanelsSet1 = 3;
@@ -154,7 +150,7 @@ int set2DisplayWidth = numPanelsSet2 * stride;
 // sets must be in numerical order
 // define each pixel pusher powered panel set by group start and group end indexes
 int[][] panelSets = {{1,4},{5,6}};
-PImage[] panelSetBuffers = new PImage[2];
+int[][] panelsInSets = {{}, {}};
 
 // this is unused, just leaving it here for the future
 // this order array will be indexed by the limits in the sets variable,
@@ -184,6 +180,7 @@ void setup() {
   //   println(lines[i]);
   // }
 
+  brightnessGroups();
   loadSequences();
 
   println("starting");
@@ -192,9 +189,7 @@ void setup() {
 
   patternPreviewBuffer = createGraphics(combinedPanelDisplayWidth, panelDisplayHeight, JAVA2D); // buffer with the same number of pixels as the wall
   set1Buffer = createGraphics(combinedPanelDisplayWidth, panelDisplayHeight, JAVA2D);
-
-  panelSetBuffers[0] = patternPreviewBuffer;
-  panelSetBuffers[1] = patternPreviewBuffer;
+  set2Buffer = createGraphics(combinedPanelDisplayWidth, panelDisplayHeight, JAVA2D);
 
   bg = loadImage("skyflares_bg.png");
   logo = loadImage("salesforce_logo.png");
@@ -360,7 +355,7 @@ void draw() {
   // draw a selected state
   pushMatrix();
     fill(255, 255, 255, 80);
-    translate(patternButton_xyPos[chosenMovie1][0], patternButton_xyPos[chosenMovie1][1]);
+    translate(patternButton_xyPos[chosenPreviewMovie][0], patternButton_xyPos[chosenPreviewMovie][1]);
     rect (0, 0, patternButtonWidth, patternButtonHeight); // selection state for the buttons
     // TODO:: make an overlay text 
   popMatrix();
@@ -393,40 +388,72 @@ void draw() {
   popMatrix();
 
 
-  //println(sequencePaths.get(chosenMovie1).path + "/pixelData" + nf(currentFrame, 5) + ".jpg");
-  String imageName1 = sequencePaths.get(chosenMovie1).path + "/pixelData" + nf(currentFrame, 5) + ".jpg";
-  String imageName2 = sequencePaths.get(chosenMovie2).path + "/pixelData" + nf(currentFrame, 5) + ".jpg";
-  currentFrame = (currentFrame+1) % sequencePaths.get(chosenMovie1).count;  // Use % to cycle through frames and loop
+  //println(sequencePaths.get(chosenPreviewMovie).path + "/pixelData" + nf(currentFrame1, 5) + ".jpg");
+  currentFrame1 = (currentFrame1+1) % (sequencePaths.get(chosenPreviewMovie).count);  // Use % to cycle through frames and loop
+  currentFrame2 = (currentFrame2+1) % (sequencePaths.get(chosenMovie1).count);  // Use % to cycle through frames and loop
+  currentFrame3 = (currentFrame3+1) % (sequencePaths.get(chosenMovie2).count);  // Use % to cycle through frames and loop
+  String imageName1 = sequencePaths.get(chosenPreviewMovie).path + "/pixelData" + nf(currentFrame1, 5) + ".jpg";
+  String imageName2 = sequencePaths.get(chosenMovie1).path + "/pixelData" + nf(currentFrame2, 5) + ".jpg";
+  String imageName3 = sequencePaths.get(chosenMovie2).path + "/pixelData" + nf(currentFrame3, 5) + ".jpg";
 
   previewMovie1 = loadImage(imageName1);
   previewMovie2 = loadImage(imageName2);
+  previewMovie3 = loadImage(imageName3);
 
   image(previewMovie1, 200, 150, 1200, 200);
-  image(previewMovie2, 0, 0, 1200, 200);
+  //image(previewMovie2, 0, 0, 1200, 200);
+  //image(previewMovie3, 0, 0, 1200, 200);
 
   patternPreviewBuffer.beginDraw();
   set1Buffer.beginDraw();
+  set2Buffer.beginDraw();
 
   patternPreviewBuffer.image(previewMovie1, 0, 0,501,24);
   set1Buffer.image(previewMovie2, 0, 0,501,24);
+  set2Buffer.image(previewMovie3, 0, 0,501,24);
   //image(set1Buffer, 0, 0, 501, 24);
   // if (noStrips) {image(errorScreen, 000, 0,800,1280);} // display error if there are no strips detected
   scrape(); // scrape the offscreen buffer
 }
 
-public void bright(float globalBright) { // takes a brightness value between 0 - 100 
-  
+public void brightnessGroups() {
+  // make array of set groups
+  for(int setIdx=0; setIdx<panelSets.length; setIdx++) {
+
+    int panelSetFirst = panelSets[setIdx][0]; // e.g. 1
+    int panelSetLast = panelSets[setIdx][1]; // e.g. 2
+    int panelSetLength = (panelSetLast - panelSetFirst); // e.g. 2  number of panels in the set inclusive
+    panelsInSets[setIdx] = new int[panelSetLength];
+    for(int i=0;i<panelSetLength; i++) {
+      panelsInSets[setIdx][i] = panelSetFirst + i;
+    }
+  }
+}
+
+public void bright1(float globalBright) {
+  bright(0, globalBright);
+}
+
+public void bright2(float globalBright) {
+  bright(1, globalBright);
+}
+
+public void bright(int setIdx, float globalBright) { // takes a brightness value between 0 - 100 
+
   float newBright = map (globalBright,0,100,0,65535);
   
-   List<PixelPusher> pushers = registry.getPushers();
-  
-    for (PixelPusher p: pushers) {
-       PusherCommand pc = new PusherCommand(PusherCommand.GLOBALBRIGHTNESS_SET,(short) (newBright));
-       spamCommand(p,  pc);
-    } 
+  List<PixelPusher> pushers = new ArrayList<PixelPusher>();
+  for(int i=0; i<panelsInSets[setIdx].length-1; i++) {
+    pushers.addAll(registry.getPushers(panelsInSets[setIdx][i]));
+  }
+  for (PixelPusher p: pushers) {
+     PusherCommand pc = new PusherCommand(PusherCommand.GLOBALBRIGHTNESS_SET,(short) (newBright));
+     spamCommand(p,  pc);
+  }
    
  // println ("brightness = " + newBright);
 }
+
 
 // UI selections
 public void controlEvent(ControlEvent theEvent) {
@@ -435,6 +462,9 @@ public void controlEvent(ControlEvent theEvent) {
   //println("clicked controller: " + controllerName);
   if(controllerName.substring(0, 3).equals("seq")) {
     onPreviewButtonPress(theEvent);
+  }
+  if(controllerName.substring(0, 4).equals("send")) {
+    onSendButtonPress(theEvent);
   }
 }
 
@@ -465,6 +495,19 @@ public void loadSequences() {
   }
 }
 
+public void onSendButtonPress(ControlEvent buttonEvent) {
+
+  int setToSendTo = Integer.parseInt(buttonEvent.getController().getName().substring(4));
+  if(setToSendTo == 1){
+    chosenMovie1 = chosenPreviewMovie;
+    currentFrame2 = -1;
+  } else if(setToSendTo == 2) {
+    chosenMovie2 = chosenPreviewMovie;
+    currentFrame3 = -1;
+  }
+  println("sent movie #" + chosenPreviewMovie + " to set #" + setToSendTo);
+}
+
 public void onPreviewButtonPress(ControlEvent buttonEvent) {
 
   // for(int i=0; i<patternButtons.length; i++) {
@@ -478,9 +521,9 @@ public void onPreviewButtonPress(ControlEvent buttonEvent) {
   // }
   // cp5.getController(buttonEvent.getController().getName()).setOn();
   int patternNum = Integer.parseInt(buttonEvent.getController().getName().substring(3));
-  chosenMovie1 = patternNum;
-  currentFrame = 0;
-  println("chose movie #" + chosenMovie1);
+  chosenPreviewMovie = patternNum;
+  currentFrame1 = -1;
+  println("chose movie #" + chosenPreviewMovie);
 }
 
 public void spamCommand(PixelPusher p, PusherCommand pc) {

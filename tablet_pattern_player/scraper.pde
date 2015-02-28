@@ -15,20 +15,20 @@ void scrape() {
       int panelSetFirst = panelSets[setIdx][0]; // e.g. 1
       int panelSetLast = panelSets[setIdx][1]; // e.g. 2
       int panelSetLength = (panelSetLast - panelSetFirst) + 1; // e.g. 2  number of panels in the set inclusive
-      println("panelSet " + setIdx);
-      println("panelSetFirst "+ panelSetFirst);
-      println("panelSetLast "+ panelSetLast);
-      println("panelSetLength "+ panelSetLength);
+      // println("panelSet " + setIdx);
+      // println("panelSetFirst "+ panelSetFirst);
+      // println("panelSetLast "+ panelSetLast);
+      // println("panelSetLength "+ panelSetLength);
 
       // for each individual panel in the current set
       for(int panelIdx = 0; panelIdx < panelSetLength; panelIdx++) {
         // index + panel start gives us the actual group
         int groupIdx = (panelIdx + panelSetFirst);
-        println(panelIdx + " group: " + groupIdx);
+        //println(panelIdx + " group: " + groupIdx);
         List<Strip> strips = registry.getStrips(groupIdx);
 
         if (strips.size() > 0) {
-          for (Strip strip : strips) {   // for each strip (y-direction)
+          for (Strip strip : strips) {   // for each strip (y-index)
             
             for (int stripx = 0; stripx < 334; stripx++) {  // loop through each pixel in the strip
             
@@ -46,13 +46,12 @@ void scrape() {
               //int pixIndex = (int) xpos + (stride * (int) ypos);
               //color c = patternPreviewBuffer.pixels[pixIndex];)
               if(setIdx == 0) {
-                color c = patternPreviewBuffer.get((int) xpos, (int) ypos);      
+                color c = set1Buffer.get((int) xpos, (int) ypos);      
                 strip.setPixel(c, stripx);          
+              } else if (setIdx == 1) {
+                color c = set2Buffer.get((int) xpos, (int) ypos);
+                strip.setPixel(c, stripx);
               }
-              //  else if (setIdx == 1) {
-              //   color c = set1Buffer.get((int) xpos, (int) ypos);
-              //   strip.setPixel(c, stripx);
-              // }
 
               if (stripx == stride || stripx == 333) {
                 ypos=ypos+1;
