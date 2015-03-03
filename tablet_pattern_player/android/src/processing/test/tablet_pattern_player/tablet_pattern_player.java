@@ -11,6 +11,7 @@ import com.heroicrobot.dropbit.devices.pixelpusher.Strip;
 import com.heroicrobot.dropbit.devices.pixelpusher.PixelPusher; 
 import com.heroicrobot.dropbit.devices.pixelpusher.PusherCommand; 
 import java.util.*; 
+import java.io.*; 
 import controlP5.*; 
 
 import java.util.HashMap; 
@@ -32,6 +33,23 @@ public class tablet_pattern_player extends PApplet {
 
 
 
+
+public class Sequence {
+  public int count;
+  public String path;
+  public String name;
+  public Sequence(String name, String path, int count)
+  {
+   this.count = count;
+   this.path = path;
+   this.name = name;
+  }
+  public String toString()
+  {
+    return "Sequence  [name: " + this.name + " path: " + this.path + " count: " + this.count + "]";
+  }
+}
+
 ControlP5 cp5;
 
 int appPaddingWidth = 200;
@@ -48,7 +66,6 @@ int patternPreviewY = appPaddingHeight;
 int numPatternButtonRows = 6;
 int numPatternButtonCols = 3;
 int numPatternButtons = numPatternButtonCols * numPatternButtonRows;
-Button[] patternButtons = new Button[numPatternButtons];
 int buttonGridY = appPaddingHeight + patternPreviewHeight;
 int buttonGridX = appPaddingWidth;
 int patternButtonWidth = 400;
@@ -79,85 +96,92 @@ int logoFrameY = logoY;
 int logoFrameWidth = 920;
 int logoFrameHeight = 341;
 
-// send pattern to set buttons
+// send pattern to set buttons and send 
 Button sendPatternSet1;
 Button sendPatternSet2;
-String set1Label = "Set #1";
-String set2Label = "Set #2";
-int sendPatternSetWidth = 440;
-int sendPatternSetHeight = 160;
-int setPaddingInner = 40;
-int setMarginTop = 40;
-int sendPatternSet1X = 1440;
-int sendPatternSet1Y = 530;
-int sendPatternSet2X = 1920;
-int sendPatternSet2Y = 530;
+String sendPattern1Label = "send";
+String sendPattern2Label = "send";
+int sendPatternSetLabelWidth = 440;
+int sendPatternSetLabelHeight = 160;
+int sendPatternSetWidth = 360;
+int sendPatternSetHeight = 80;
+int sendPaddingInner = 40;
+int sendMarginTop = 40;
+int sendPatternSet1LabelX = 1440;
+int sendPatternSet1LabelY = 530;
+int sendPatternSet2LabelX = 1920;
+int sendPatternSet2LabelY = 530;
+int sendPatternSet1X = sendPatternSet1LabelX + sendPaddingInner;
+int sendPatternSet1Y = sendPatternSet1LabelY + sendPatternSetLabelHeight + 40;
+int sendPatternSet2X = sendPatternSet2LabelX + sendPaddingInner;
+int sendPatternSet2Y = sendPatternSet2LabelY + sendPatternSetLabelHeight + 40;
 
 // brightness sliders
 Slider bright1;
 Slider bright2;
-int bright1X = sendPatternSet1X;
-int bright1Y = sendPatternSet1Y + sendPatternSetHeight + setMarginTop;
-int bright2X = sendPatternSet2X;
+int sliderPaddingInner = 20;
+int brightWidth = sendPatternSetWidth - (sliderPaddingInner*2);
+int brightHeight = 560;
+int bright1X = sendPatternSet1X + sliderPaddingInner;
+int bright1Y = sendPatternSet1Y + sendPatternSetHeight + sendMarginTop;
+int bright2X = sendPatternSet2X + sliderPaddingInner;
 int bright2Y = bright1Y;
+int brightHandlesSize = 35;
 int sliderValue = 100;
 int globalBright=100;
 
+// send to set section components
+int setLabelWidth = 440;
+int setLabelHeight = 160;
+int set1LabelX = logoFrameX;
+int set1LabelY = logoFrameY + logoFrameHeight + sendMarginTop;
+int set2LabelX = set1LabelX + setLabelWidth + sendMarginTop;
+int set2LabelY = set1LabelY;
+Button setLabel1;
+Button setLabel2;
+
+
+
 int[][] patternButton_xyPos = new int[numPatternButtons][2];  // pattern button draw positions, array of [x,y]
+List<Button> patternButtons;
+ArrayList<Sequence> sequencePaths;
+int chosenPreviewMovie=1;
+int chosenMovie1=9;
+int chosenMovie2=9;
+int currentFrame1 = -1;
+int currentFrame2 = -1;
+int currentFrame3 = -1;
+PImage previewMovie1;
+PImage previewMovie2;
+PImage previewMovie3;
+
 
 boolean noStrips = true;
-int chosenMovie=1;
-int currentFrame = 0;
-
-// setup file path a durations for the image sequences
-String pathBase1 = "blanks";
-int duration1 = 1;
-
-String pathBase2 = "seq1";
-int duration2 = 1680;
-
-String pathBase3 = "seq2";
-int duration3 = 1800;
-    
-String pathBase4 = "seq3";
-int duration4 = 1800;
-   
-String pathBase5 = "seq4";
-int duration5 = 1800;
-   
-String pathBase6 = "seq5";
-int duration6 = 1800;
-   
-String pathBase7 = "seq6";
-int duration7 = 1799;
- 
-String pathBase8 = "seq7";
-int duration8 = 454;
-
-String pathBase9 = "seq8";
-int duration9 = 150;
-
-
-String pathBase = pathBase1; // set start pattern to "all off"
-int numFrames = duration1;
-PImage previewMovie;
-
-
-
 DeviceRegistry registry;
 PusherObserver observer;
 PGraphics patternPreviewBuffer;
+PGraphics set1Buffer;
+PGraphics set2Buffer;
 
-int numPanels = 3;
+int numSets = 2;
+int numPanelsSet1 = 3;
+int numPanelsSet2 = 3;
 int stride = 167; // number of LEDs per row aka striplength
 int panelDisplayHeight = 24;
 float xscale = 1; // horizontal scale factor
-int combinedPanelDisplayWidth = numPanels * stride;
-// define each set by group start and group end indexes
+int combinedPanelDisplayWidth = (numPanelsSet1 + numPanelsSet2) * stride;
+int set1DisplayWidth = numPanelsSet1 * stride;
+int set2DisplayWidth = numPanelsSet2 * stride;
+
+// sets must be in numerical order
+// define each pixel pusher powered panel set by group start and group end indexes
 int[][] panelSets = {{1,4},{5,6}};
+int[][] panelsInSets = {{}, {}};
+
+// this is unused, just leaving it here for the future
 // this order array will be indexed by the limits in the sets variable,
 // the values represent the order that the controller groups are scraped to
-int[][] order = {{1,1}, {2,2}, {3,3}, {4,4}, {5,5}, {6,6}};
+//int[][] order = {{1,1}, {2,2}, {3,3}, {4,4}, {5,5}, {6,6}};
 
 PImage bg;
 PImage logo;
@@ -166,9 +190,32 @@ PImage errorScreen;
 
 public void setup() {
 
+  
+  // load configs
+  String setConfig[] = loadStrings("setconfig.txt");
+  println("there are " + setConfig.length + " sets");
+  for (int i = 0 ; i < numSets; i++) {
+    String[] savedset = setConfig[i].split(",");
+    panelSets[i] = new int[] {Integer.parseInt(savedset[0]), Integer.parseInt(savedset[1])};
+    println(setConfig[i]);
+  }
+  println("panelSets.length:" + panelSets.length);
+  // String lastSends[] = loadStrings("lastsends.txt");
+  // println("there was " + lines.length + " saved send(s)");
+  // for (int i = 0 ; i < lines.length; i++) {
+  //   println(lines[i]);
+  // }
+
+  brightnessGroups();
+  loadSequences();
+
+  println("starting");
  
   frameRate(15);
+
   patternPreviewBuffer = createGraphics(combinedPanelDisplayWidth, panelDisplayHeight, JAVA2D); // buffer with the same number of pixels as the wall
+  set1Buffer = createGraphics(combinedPanelDisplayWidth, panelDisplayHeight, JAVA2D);
+  set2Buffer = createGraphics(combinedPanelDisplayWidth, panelDisplayHeight, JAVA2D);
 
   bg = loadImage("skyflares_bg.png");
   logo = loadImage("salesforce_logo.png");
@@ -179,7 +226,7 @@ public void setup() {
   cp5 = new ControlP5(this);
   cp5.setControlFont(p);
   cp5.setAutoDraw(false);
-    
+  
   // create colorpicker mode button
   colorPickerModeButton = cp5.addButton("colorPickerMode")
     .setCaptionLabel(colorPickerModeLabel)
@@ -190,7 +237,6 @@ public void setup() {
     .setColorBackground(color(255,255,255,25))
     .setColorCaptionLabel(color(17, 84, 130, 255))
     ;
-
   // reposition the Label for controller 'colorpickermode'
   cp5.getController("colorPickerMode").getValueLabel().align(ControlP5.CENTER, ControlP5.CENTER).setPaddingX(0);
   cp5.getController("colorPickerMode").getCaptionLabel().align(ControlP5.CENTER, ControlP5.CENTER).setPaddingX(0);
@@ -198,56 +244,90 @@ public void setup() {
   bright1 = cp5.addSlider("bright1")
     .setRange(0,100)
     .setValue(100)
+    .setLabelVisible(false)
     .setPosition(bright1X, bright1Y)
-    .setSize(sendPatternSetWidth, 850)
-    .setNumberOfTickMarks(50)
-    .snapToTickMarks(true)
+    .setSize(brightWidth, brightHeight)
+    .setHandleSize(brightHandlesSize)
+    .setColorActive(color(255,255,255,150))
+    .setColorForeground(color(255,255,255,150))
+    .setColorBackground(color(255,255,255,0))
     .setDecimalPrecision(0)
+    .setSliderMode(controlP5.Slider.FLEXIBLE)
     ;
-     
-  // reposition the Label for controller 'slider'
-  cp5.getController("bright1").getValueLabel().align(ControlP5.CENTER, ControlP5.CENTER).setPaddingX(0);
+  // reposition the Label for controller 'bright1'
+  cp5.getController("bright1").getValueLabel().align(ControlP5.CENTER, ControlP5.BOTTOM).setPaddingX(0);
   cp5.getController("bright1").getCaptionLabel().align(ControlP5.CENTER, ControlP5.CENTER).setPaddingX(0);
 
   bright2 = cp5.addSlider("bright2")
     .setRange(0,100)
     .setValue(100)
+    .setLabelVisible(false)
     .setPosition(bright2X, bright2Y)
-    .setSize(sendPatternSetWidth, 850)
-    .setNumberOfTickMarks(50)
-    .snapToTickMarks(true)
-    .setDecimalPrecision(0) 
+    .setSize(brightWidth, brightHeight)
+    .setHandleSize(brightHandlesSize)
+    .setColorActive(color(255,255,255,150))
+    .setColorForeground(color(255,255,255,150))
+    .setColorBackground(color(255,255,255,0))
+    .setDecimalPrecision(0)
+    .setSliderMode(controlP5.Slider.FLEXIBLE)
     ;
-     
-  // reposition the Label for controller 'slider'
-  cp5.getController("bright2").getValueLabel().align(ControlP5.CENTER, ControlP5.CENTER).setPaddingX(0);
+  // reposition the Label for controller 'bright2'
+  cp5.getController("bright2").getValueLabel().align(ControlP5.CENTER, ControlP5.BOTTOM).setPaddingX(0);
   cp5.getController("bright2").getCaptionLabel().align(ControlP5.CENTER, ControlP5.CENTER).setPaddingX(0);
 
+
+  setLabel1 = cp5.addButton("setLabel1")
+    .setPosition(set1LabelX, set1LabelY)
+    .setCaptionLabel("Set #1")
+    .setColorCaptionLabel(color(24, 118, 183, 255))
+    .setSize(setLabelWidth, setLabelHeight)
+    .setColorActive(color(255,255,255,150))
+    .setColorForeground(color(255,255,255,150))
+    .setColorBackground(color(255,255,255,255))
+    ;
+  // reposition the Label for controller 'setLabel1'
+  cp5.getController("setLabel1").getValueLabel().align(ControlP5.CENTER, ControlP5.CENTER).setPaddingX(0);
+  cp5.getController("setLabel1").getCaptionLabel().align(ControlP5.CENTER, ControlP5.CENTER).setPaddingX(0);
+
+  setLabel2 = cp5.addButton("setLabel2")
+    .setPosition(set2LabelX, set2LabelY)
+    .setCaptionLabel("Set #2")
+    .setColorCaptionLabel(color(24, 118, 183, 255))
+    .setSize(setLabelWidth, setLabelHeight)
+    .setColorActive(color(255,255,255,150))
+    .setColorForeground(color(255,255,255,150))
+    .setColorBackground(color(255,255,255,255))
+    ;
+  // reposition the Label for controller 'setLabel2'
+  cp5.getController("setLabel2").getValueLabel().align(ControlP5.CENTER, ControlP5.CENTER).setPaddingX(0);
+  cp5.getController("setLabel2").getCaptionLabel().align(ControlP5.CENTER, ControlP5.CENTER).setPaddingX(0);
+
+
   // create send to pattern 1 button
-  sendPatternSet1 = cp5.addButton("set1")
-    .setCaptionLabel(set1Label)
-    .setValueLabel(set1Label)
+  sendPatternSet1 = cp5.addButton("send1")
+    .setCaptionLabel(sendPattern1Label)
     .setValue(0)
     .setPosition(sendPatternSet1X, sendPatternSet1Y)
     .setSize(sendPatternSetWidth, sendPatternSetHeight)
+    .setColorCaptionLabel(color(17, 84, 130, 255))
+    .setColorActive(color(255,255,255,150))
+    .setColorForeground(color(255,255,255, 150))
+    .setColorBackground(color(255,255,255,75))
     ;
-
-  // reposition the Label for controller 'set1'
-  cp5.getController("set1").getValueLabel().align(ControlP5.CENTER, ControlP5.CENTER).setPaddingX(0);
-  cp5.getController("set1").getCaptionLabel().align(ControlP5.CENTER, ControlP5.CENTER).setPaddingX(0);
+  // reposition the Label for controller 'send1'
+  cp5.getController("send1").getValueLabel().align(ControlP5.CENTER, ControlP5.CENTER).setPaddingX(0);
+  cp5.getController("send1").getCaptionLabel().align(ControlP5.CENTER, ControlP5.CENTER).setPaddingX(0);
 
   // create send to pattern 2 button
-  sendPatternSet1 = cp5.addButton("set2")
-    .setCaptionLabel(set2Label)
-    .setValueLabel(set2Label)
+  sendPatternSet1 = cp5.addButton("send2")
+    .setCaptionLabel(sendPattern2Label)
     .setValue(0)
     .setPosition(sendPatternSet2X, sendPatternSet2Y)
     .setSize(sendPatternSetWidth, sendPatternSetHeight)
     ;
-
   // reposition the Label for controller 'set2'
-  cp5.getController("set2").getValueLabel().align(ControlP5.CENTER, ControlP5.CENTER).setPaddingX(0);
-  cp5.getController("set2").getCaptionLabel().align(ControlP5.CENTER, ControlP5.CENTER).setPaddingX(0);
+  cp5.getController("send2").getValueLabel().align(ControlP5.CENTER, ControlP5.CENTER).setPaddingX(0);
+  cp5.getController("send2").getCaptionLabel().align(ControlP5.CENTER, ControlP5.CENTER).setPaddingX(0);
 
 
   // calculate pattern button positions
@@ -258,30 +338,32 @@ public void setup() {
       patternButton_xyPos[idx][1] = (buttonGridY + (ui_yposMultiplier * i));
       //println((idx) + " - x:"+patternButton_xyPos[idx][0]+" y:"+patternButton_xyPos[idx][1]);
     }
-  }
+  }  
 
-  // create & draw the button grid butrons
+  numPatternButtons = sequencePaths.size();
+  // create & draw the button grid buttons
   for(int b=0; b<numPatternButtons; b++) {
-    String label = "Pattern #" + (b+1);
-    String name = "seq" + (b+1);
-    patternButtons[b] = cp5.addButton(name)
+    String label = sequencePaths.get(b).name;
+    String name = "seq" + b;
+    cp5.addButton(name)
       .setCaptionLabel(label)
       .setValueLabel(label)
       .setStringValue(name)
       .setValue(0)
-      .setSwitch(true)
+      // .setSwitch(true)
+      // .activateBy(ControlP5.RELEASE)
       .setPosition(patternButton_xyPos[b][0], patternButton_xyPos[b][1])
       .setSize(patternButtonWidth, patternButtonHeight)
       .setColorCaptionLabel(color(17, 84, 130, 255))
       .setColorActive(color(255,255,255,150))
-      .setColorBackground(color(255,255,255,40))
+      //.setColorForeground(color(255,255,255, 150))
+      .setColorBackground(color(255,255,255,60))
       ;
       // reposition the Label for controllers named 'seq'+(b+1)
       cp5.getController(name).getValueLabel().align(ControlP5.CENTER, ControlP5.CENTER).setPaddingX(0);
       cp5.getController(name).getCaptionLabel().align(ControlP5.CENTER, ControlP5.CENTER).setPaddingX(0);
   }
 
-  chosenMovie=1; //default
   registry = new DeviceRegistry();
   observer = new PusherObserver();
   registry.addObserver(observer);
@@ -292,14 +374,19 @@ public void setup() {
 
 
 public void draw() {
+
   background(bg);
   image(logo, logoX, logoY);
   cp5.draw();
-  // draw selected state
+
+  // draw a selected state
   pushMatrix();
-    translate(patternButton_xyPos[chosenMovie-1][0], patternButton_xyPos[chosenMovie-1][1]);
-    rect (0, 0, patternButtonWidth,patternButtonHeight); // selection state for the buttons
+    fill(255, 255, 255, 80);
+    translate(patternButton_xyPos[chosenPreviewMovie][0], patternButton_xyPos[chosenPreviewMovie][1]);
+    rect (0, 0, patternButtonWidth, patternButtonHeight); // selection state for the buttons
+    // TODO:: make an overlay text 
   popMatrix();
+
   // draw logo frame
   pushMatrix();
     translate(logoFrameX, logoFrameY);
@@ -326,71 +413,83 @@ public void draw() {
       }
     }
   popMatrix();
-  
-  
-  switch(chosenMovie){ // sets the path and duration of the PNG sequence based on the button selection
-    
-    case 1:
-      pathBase = pathBase1;
-      numFrames = duration1;
-      break;
-    
-    case 2:
-      pathBase = pathBase2;
-      numFrames = duration2;
-      break;
-    
-    case 3:
-      pathBase = pathBase3;
-      numFrames = duration3;
-      break;     
-      
-    
-    case 4:
-      pathBase = pathBase4;
-      numFrames = duration4;
-      break;   
-    
-    case 5:
-      pathBase = pathBase5;
-      numFrames = duration5;
-      break;   
-    
-    case 6:
-      pathBase = pathBase6;
-      numFrames = duration6;
-      break;  
-    
-    case 7:
-      pathBase = pathBase7;
-      numFrames = duration7;
-      break;  
-    
-    case 8:
-      pathBase = pathBase8;
-      numFrames = duration8;
-      break;  
-    
-    case 9:
-      pathBase = pathBase9;
-      numFrames = duration9;
-      break;  
-    
-  }
-  
-  currentFrame = (currentFrame+1) % numFrames;  // Use % to cycle through frames and loop
-  String imageName = "sequences/" + pathBase + "/pixelData" + nf(currentFrame, 5) + ".jpg";
-  previewMovie = loadImage(imageName);
-  image (previewMovie,200,150,1200,200);
-    
-  
+
+
+  //println(sequencePaths.get(chosenPreviewMovie).path + "/pixelData" + nf(currentFrame1, 5) + ".jpg");
+  currentFrame1 = (currentFrame1+1) % (sequencePaths.get(chosenPreviewMovie).count);  // Use % to cycle through frames and loop
+  currentFrame2 = (currentFrame2+1) % (sequencePaths.get(chosenMovie1).count);  // Use % to cycle through frames and loop
+  currentFrame3 = (currentFrame3+1) % (sequencePaths.get(chosenMovie2).count);  // Use % to cycle through frames and loop
+  String imageName1 = sequencePaths.get(chosenPreviewMovie).path + "/pixelData" + nf(currentFrame1, 5) + ".jpg";
+  String imageName2 = sequencePaths.get(chosenMovie1).path + "/pixelData" + nf(currentFrame2, 5) + ".jpg";
+  String imageName3 = sequencePaths.get(chosenMovie2).path + "/pixelData" + nf(currentFrame3, 5) + ".jpg";
+
+  previewMovie1 = loadImage(imageName1);
+  previewMovie2 = loadImage(imageName2);
+  previewMovie3 = loadImage(imageName3);
+
+  image(previewMovie1, 200, 150, 1200, 200);
+  //image(previewMovie2, 0, 0, 1200, 200);
+  //image(previewMovie3, 0, 0, 1200, 200);
+
   patternPreviewBuffer.beginDraw();
-  patternPreviewBuffer.image(previewMovie, 0, 0,501,24);
+  set1Buffer.beginDraw();
+  set2Buffer.beginDraw();
 
+  patternPreviewBuffer.image(previewMovie1, 0, 0,501,24);
+  set1Buffer.image(previewMovie2, 0, 0,501,24);
+  set2Buffer.image(previewMovie3, 0, 0,501,24);
+  //image(set1Buffer, 0, 0, 501, 24);
   // if (noStrips) {image(errorScreen, 000, 0,800,1280);} // display error if there are no strips detected
-  //scrape(); // scrape the offscreen buffer 
-
+  scrape(); // scrape the offscreen buffer
 }
+
+public void brightnessGroups() {
+  // make array of set groups
+  for(int setIdx=0; setIdx<panelSets.length; setIdx++) {
+
+    int panelSetFirst = panelSets[setIdx][0]; // e.g. 1
+    int panelSetLast = panelSets[setIdx][1]; // e.g. 2
+    int panelSetLength = (panelSetLast - panelSetFirst); // e.g. 2  number of panels in the set inclusive
+    panelsInSets[setIdx] = new int[panelSetLength];
+    for(int i=0;i<panelSetLength; i++) {
+      panelsInSets[setIdx][i] = panelSetFirst + i;
+    }
+  }
+}
+
+// public void bright1(ControlEvent globalBright) {
+//   float val = globalBright.getValue();
+//   if(val > 0 || val < 100) {
+//  println ("brightness = " + val);
+//     bright(0, val);
+//   }
+// }
+
+// public void bright2(ControlEvent globalBright) {
+//   float val = globalBright.getValue();
+//   if(val > 0 || val < 100) {
+//  println ("brightness = " + val);
+//     bright(1, val);
+//   }
+// }
+
+public void bright(int setIdx, float globalBright) { // takes a brightness value between 0 - 100 
+
+  if (observer.hasStrips) {
+    float newBright = map (globalBright,0,100,0,65535);
+    
+    List<PixelPusher> pushers = new ArrayList<PixelPusher>();
+    for(int i=0; i<panelsInSets[setIdx].length-1; i++) {
+      pushers.addAll(registry.getPushers(panelsInSets[setIdx][i]));
+    }
+    for (PixelPusher p: pushers) {
+       PusherCommand pc = new PusherCommand(PusherCommand.GLOBALBRIGHTNESS_SET,(short) (newBright));
+       spamCommand(p,  pc);
+    }
+    println ("brightness = " + newBright);
+  }
+}
+
 
 // UI selections
 public void controlEvent(ControlEvent theEvent) {
@@ -398,29 +497,83 @@ public void controlEvent(ControlEvent theEvent) {
   String controllerName = theEvent.getController().getName();
   //println("clicked controller: " + controllerName);
   if(controllerName.substring(0, 3).equals("seq")) {
-    onPreviewButtonPress(theEvent, controllerName);
+    onPreviewButtonPress(theEvent);
+  }
+  if(controllerName.substring(0, 4).equals("send")) {
+    onSendButtonPress(theEvent);
   }
 }
 
-public void onPreviewButtonPress(ControlEvent buttonEvent, String controllerName) {
+public void loadSequences() {
+  
+  // load sequence paths and count their durations 
+  File folder = new File(dataPath(""),"sequences");
+  println(folder.getPath());
+  String[] seqs = folder.list();
+  println(typeof seqs);
+  sequencePaths = new ArrayList<Sequence>(seqs.length);
+  int seqIdx = 0; // keep our own count for indexing into the sequencePaths array since hidden files will make our loop skip 
+  if(null != seqs) {
+    for (int i = 0; i < seqs.length; i++) {
+      File f = new File(seqs[i]);
+      int count = 0;
+      if(!f.isHidden()) {
+        String frameDir = dataPath("sequences") + f.separatorChar + f.getPath();
+        File[] frames = new File(frameDir).listFiles();
+        if(null != frames) {
+          count = frames.length;
+        }
+        println(seqIdx + " " + frameDir);
+        sequencePaths.add(seqIdx++, new Sequence(f.getPath(), frameDir, count));
+      }
+    }
+  sequencePaths.trimToSize();
+  } else {
+   println("no sequences");
+   exit();
+  }
+}
 
-  // for(int i=0; i<patternButtons.length; i++) {
-    
-  //   if(patternButtons[i].isOn()) {
-    
-  //     patternButtons[i].setOff();
-  //     println("setting off.. " + patternButtons[i].getStringValue());
-  //   }
-  //   if(patternButtons[i].getStringValue() == controllerName) {
-    
-  //     println("pressed " + controllerName);
-  //     patternButtons[i].setOn();
-  //   }
-  // }
-  int patternNum = Integer.parseInt(buttonEvent.getController().getName().substring(3));
-  chosenMovie = patternNum;
-  currentFrame = 0;
-  //println("chose movie #" + chosenMovie);
+public void onSendButtonPress(ControlEvent buttonEvent) {
+
+  int setToSendTo = Integer.parseInt(buttonEvent.getController().getName().substring(4));
+  if(setToSendTo == 1){
+    chosenMovie1 = chosenPreviewMovie;
+    currentFrame2 = -1;
+  } else if(setToSendTo == 2) {
+    chosenMovie2 = chosenPreviewMovie;
+    currentFrame3 = -1;
+  }
+  println("sent movie #" + chosenPreviewMovie + " to set #" + setToSendTo);
+}
+
+public void onPreviewButtonPress(ControlEvent buttonEvent) {
+
+  Button butt = ((Button)buttonEvent.getController());
+  if(butt != null) {
+    //println(butt.getName());
+    //println(butt.toString());
+    List<Button> patternButtons = cp5.getAll(Button.class);
+    // for(Button b:patternButtons) {
+    //   //println(b.toString());
+    //   String name = ((String)b.getName());
+    //   if(b != null) {
+    //     if(name.substring(0, 3).equals("seq")) {
+    //       if(name != butt.getName()) {
+    //         //println(butt.getName() + " pressed and " + b.getName() + " is set on, setting off " + b.toString());
+    //         b.setOff();
+    //       } else {
+    //         b.setOn();
+    //       }
+    //     }
+    //   }
+    // }
+
+    int patternNum = Integer.parseInt(((String)butt.getName()).substring(3));
+    chosenPreviewMovie = patternNum;
+    currentFrame1 = -1;
+    println("chose movie #" + chosenPreviewMovie);
+  }
 }
 
 public void spamCommand(PixelPusher p, PusherCommand pc) {
@@ -428,22 +581,6 @@ public void spamCommand(PixelPusher p, PusherCommand pc) {
     p.sendCommand(pc);
   }
 }
-
-
-public void bright(float globalBright) { // takes a brightness value between 0 - 100 
-  
-  float newBright = map (globalBright,0,100,0,65535);
-  
-   List<PixelPusher> pushers = registry.getPushers();
-  
-    for (PixelPusher p: pushers) {
-       PusherCommand pc = new PusherCommand(PusherCommand.GLOBALBRIGHTNESS_SET,(short) (newBright));
-       spamCommand(p,  pc);
-    } 
-   
- // println ("brightness = " + newBright);
-}
-
 
 
 
@@ -466,39 +603,64 @@ public void scrape() {
   patternPreviewBuffer.loadPixels();
   if (observer.hasStrips) {
     registry.startPushing();
-    for(int panelIdx = 1; panelIdx < numPanels; panelIdx++) {
 
-      List<Strip> strips = registry.getStrips(panelIdx);
+    // each set of panels
+    for(int setIdx=0; setIdx<panelSets.length; setIdx++) {
 
-      if (strips.size() > 0) {
-        for (Strip strip : strips) {   // for each strip (y-direction)
-          
-          for (int stripx = 0; stripx < 334; stripx++) {  // loop through each pixel in the strip
-          
-            int xpixel = stripx % stride;
-            int stridenumber = stripx / stride;             
-            // zigzag code
-            if ((stridenumber & 1) == 0) { // we are going left to right
-              xpos = xpixel * xscale;
-            } else { // we are going right to left
-              xpos = ((stride - 1)-xpixel) * xscale;
-            }
-            // add 0-indexed multiplier of stride for xpos
-            xpos = xpos + ((panelIdx - 1) * stride);
-            //println ("Group" + panelIdx + " getting pixel from "+xpos + "," + ypos);
-            int c = patternPreviewBuffer.get((int) xpos, (int)ypos);
-            strip.setPixel(c, stripx);
-            if (stripx == stride || stripx == 333) {
-              ypos=ypos+1;
-            } // move to the next yPos of the buffer
+      // index into the {start,end} panel sets and scrape for those panels in order
+      // we will index into the panelSetBuffers as well, to get the right stuff from them
+      int panelSetFirst = panelSets[setIdx][0]; // e.g. 1
+      int panelSetLast = panelSets[setIdx][1]; // e.g. 2
+      int panelSetLength = (panelSetLast - panelSetFirst) + 1; // e.g. 2  number of panels in the set inclusive
+      // println("panelSet " + setIdx);
+      // println("panelSetFirst "+ panelSetFirst);
+      // println("panelSetLast "+ panelSetLast);
+      // println("panelSetLength "+ panelSetLength);
+
+      // for each individual panel in the current set
+      for(int panelIdx = 0; panelIdx < panelSetLength; panelIdx++) {
+        // index + panel start gives us the actual group
+        int groupIdx = (panelIdx + panelSetFirst);
+        //println(panelIdx + " group: " + groupIdx);
+        List<Strip> strips = registry.getStrips(groupIdx);
+
+        if (strips.size() > 0) {
+          for (Strip strip : strips) {   // for each strip (y-index)
             
-          } //end x loop
-         
-        } // for each strip
-      } // strips.size() check for any strips
+            for (int stripx = 0; stripx < 334; stripx++) {  // loop through each pixel in the strip
+            
+              int xpixel = stripx % stride;
+              int stridenumber = stripx / stride;            
+              // zigzag code
+              if ((stridenumber & 1) == 0) { // we are going left to right
+                xpos = xpixel * xscale;
+              } else { // we are going right to left
+                xpos = ((stride - 1)-xpixel) * xscale;
+              }
+              // add 0-indexed multiplier of stride for xpos
+              xpos = xpos + (panelIdx * stride);
+              //println ("Set: " + setIdx + " Group: " + groupIdx + " stride:" + (panelIdx * stride) + " getting pixel from "+xpos + "," + ypos);
+              //int pixIndex = (int) xpos + (stride * (int) ypos);
+              //color c = patternPreviewBuffer.pixels[pixIndex];)
+              if(setIdx == 0) {
+                int c = set1Buffer.get((int) xpos, (int) ypos);      
+                strip.setPixel(c, stripx);          
+              } else if (setIdx == 1) {
+                int c = set2Buffer.get((int) xpos, (int) ypos);
+                strip.setPixel(c, stripx);
+              }
 
-      // reset y scan
-      ypos = 0;
+              if (stripx == stride || stripx == 333) {
+                ypos=ypos+1;
+              } // move to the next yPos of the buffer
+              
+            } //end x loop
+           
+          } // for each strip
+        } // strips.size() check for any strips
+        // reset y scan
+        ypos = 0;
+      }
     }
   } // observer
 } // scrape
