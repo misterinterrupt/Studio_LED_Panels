@@ -139,13 +139,12 @@ PGraphics set2Buffer;
 
 int numSets = 2;
 int numPanelsSet1 = 3;
-int numPanelsSet2 = 3;
+int numPanelsSet2 = 4;
 int stride = 167; // number of LEDs per row aka striplength
 int panelDisplayHeight = 24;
 float xscale = 1; // horizontal scale factor
-int combinedPanelDisplayWidth = (numPanelsSet1 + numPanelsSet2) * stride;
-int set1DisplayWidth = numPanelsSet1 * stride;
-int set2DisplayWidth = numPanelsSet2 * stride;
+int panelDisplayWidth = (numPanelsSet1 + numPanelsSet2) * stride;
+int bufferWidth = 4*stride;
 
 // sets must be in numerical order
 // define each pixel pusher powered panel set by group start and group end indexes
@@ -185,11 +184,11 @@ void setup() {
 
   println("starting");
   size(2560, 1600);
-  frameRate(15);
+  frameRate(30);
 
-  patternPreviewBuffer = createGraphics(combinedPanelDisplayWidth, panelDisplayHeight, JAVA2D); // buffer with the same number of pixels as the wall
-  set1Buffer = createGraphics(combinedPanelDisplayWidth, panelDisplayHeight, JAVA2D);
-  set2Buffer = createGraphics(combinedPanelDisplayWidth, panelDisplayHeight, JAVA2D);
+  patternPreviewBuffer = createGraphics(bufferWidth, panelDisplayHeight, JAVA2D); // buffer with the same number of pixels as the wall
+  set1Buffer = createGraphics(bufferWidth, panelDisplayHeight, JAVA2D);
+  set2Buffer = createGraphics(bufferWidth, panelDisplayHeight, JAVA2D);
 
   bg = loadImage("skyflares_bg.png");
   logo = loadImage("salesforce_logo.png");
@@ -408,10 +407,10 @@ void draw() {
   set1Buffer.beginDraw();
   set2Buffer.beginDraw();
 
-  patternPreviewBuffer.image(previewMovie1, 0, 0,501,24);
-  set1Buffer.image(previewMovie2, 0, 0,501,24);
-  set2Buffer.image(previewMovie3, 0, 0,501,24);
-  //image(set1Buffer, 0, 0, 501, 24);
+  patternPreviewBuffer.image(previewMovie1, 0, 0,668,24);
+  set1Buffer.image(previewMovie2, 0, 0,668,24);
+  set2Buffer.image(previewMovie3, 0, 0,668,24);
+  //image(set1Buffer, 0, 0, 668, 24);
   // if (noStrips) {image(errorScreen, 000, 0,800,1280);} // display error if there are no strips detected
   scrape(); // scrape the offscreen buffer
 }

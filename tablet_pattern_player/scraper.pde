@@ -1,6 +1,6 @@
 void scrape() {
   // scrape for the strips 501 x 24 (167 per panel)
-  
+  // scrape for the strips 668 x 24 (167 per panel)  
   
   float xpos = 0, ypos = 0;
   patternPreviewBuffer.loadPixels();
@@ -24,7 +24,7 @@ void scrape() {
       for(int panelIdx = 0; panelIdx < panelSetLength; panelIdx++) {
         // index + panel start gives us the actual group
         int groupIdx = (panelIdx + panelSetFirst);
-        //println(panelIdx + " group: " + groupIdx);
+        // println(panelIdx + " group: " + groupIdx);
         List<Strip> strips = registry.getStrips(groupIdx);
 
         if (strips.size() > 0) {
