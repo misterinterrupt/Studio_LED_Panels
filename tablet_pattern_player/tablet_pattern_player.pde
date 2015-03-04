@@ -387,7 +387,7 @@ void draw() {
       }
     }
   popMatrix();
-  loadImage("/sdcard/airdroid/upload/patternA/pixelData00001.jpg");
+  //loadImage("/sdcard/airdroid/upload/patternA/pixelData00001.jpg");
 
 
   //println(sequencePaths.get(chosenPreviewMovie).path + "/pixelData" + nf(currentFrame1, 5) + ".jpg");
@@ -397,6 +397,8 @@ void draw() {
   String imageName1 = sequencePaths.get(chosenPreviewMovie).path + "/pixelData" + nf(currentFrame1, 5) + ".jpg";
   String imageName2 = sequencePaths.get(chosenMovie1).path + "/pixelData" + nf(currentFrame2, 5) + ".jpg";
   String imageName3 = sequencePaths.get(chosenMovie2).path + "/pixelData" + nf(currentFrame3, 5) + ".jpg";
+
+  println("imageName1: " + imageName1);
 
   previewMovie1 = loadImage(imageName1);
   previewMovie2 = loadImage(imageName2);
@@ -424,7 +426,7 @@ public void brightnessGroups() {
 
     int panelSetFirst = panelSets[setIdx][0]; // e.g. 1
     int panelSetLast = panelSets[setIdx][1]; // e.g. 2
-    int panelSetLength = (panelSetLast - panelSetFirst); // e.g. 2  number of panels in the set inclusive
+    int panelSetLength = (panelSetLast - panelSetFirst)+1; // e.g. 2  number of panels in the set inclusive
     panelsInSets[setIdx] = new int[panelSetLength];
     for(int i=0;i<panelSetLength; i++) {
       panelsInSets[setIdx][i] = panelSetFirst + i;
@@ -432,21 +434,21 @@ public void brightnessGroups() {
   }
 }
 
-// public void bright1(ControlEvent globalBright) {
-//   float val = globalBright.getValue();
-//   if(val > 0 || val < 100) {
-//  println ("brightness = " + val);
-//     bright(0, val);
-//   }
-// }
+public void bright1(ControlEvent globalBright) {
+  float val = globalBright.getValue();
+  if(val > 0 || val < 100) {
+ println ("brightness = " + val);
+    bright(0, val);
+  }
+}
 
-// public void bright2(ControlEvent globalBright) {
-//   float val = globalBright.getValue();
-//   if(val > 0 || val < 100) {
-//  println ("brightness = " + val);
-//     bright(1, val);
-//   }
-// }
+public void bright2(ControlEvent globalBright) {
+  float val = globalBright.getValue();
+  if(val > 0 || val < 100) {
+ println ("brightness = " + val);
+    bright(1, val);
+  }
+}
 
 public void bright(int setIdx, float globalBright) { // takes a brightness value between 0 - 100 
 
@@ -454,7 +456,7 @@ public void bright(int setIdx, float globalBright) { // takes a brightness value
     float newBright = map (globalBright,0,100,0,65535);
     
     List<PixelPusher> pushers = new ArrayList<PixelPusher>();
-    for(int i=0; i<panelsInSets[setIdx].length-1; i++) {
+    for(int i=0; i<panelsInSets[setIdx].length; i++) {
       pushers.addAll(registry.getPushers(panelsInSets[setIdx][i]));
     }
     for (PixelPusher p: pushers) {
@@ -479,26 +481,26 @@ public void controlEvent(ControlEvent theEvent) {
   }
 }
 
-public File getMovieStorageDir() {
-    // Get the directory for the user's public pictures directory.
-    File file = new File(Environment.getExternalStoragePublicDirectory(
-            Environment.DIRECTORY_MOVIES),"");
-    if (!file.mkdirs()) {
-        println("Directory not created");
-    }
-    return file;
-}
+// public File getMovieStorageDir() {
+//     // Get the directory for the user's public pictures directory.
+//     File file = new File(Environment.getExternalStoragePublicDirectory(
+//             Environment.DIRECTORY_MOVIES),"");
+//     if (!file.mkdirs()) {
+//         println("Directory not created");
+//     }
+//     return file;
+// }
 
 public void loadSequences() {
   
   // load sequence paths and count their durations 
-  File folder = new File(sketchPath("sequences"));
+  // File folder = new File(sketchPath("sequences"));
   // File folder = getMovieStorageDir();
   // File folder = new File("//sdcard/Movies");
-  // File folder = new File("/sdcard/airdroid/upload");
-  println(folder.getPath());
+  File folder = new File("/sdcard/airdroid/upload");
+  //println(folder.getPath());
   String[] seqs = folder.list();
-  println(seqs);
+  //println(seqs);
 
   if(seqs != null) {
     sequencePaths = new ArrayList<Sequence>(seqs.length);
@@ -512,7 +514,7 @@ public void loadSequences() {
           if(null != frames) {
             count = frames.length;
           }
-          println(seqIdx + " " + frameDir);
+          //println(seqIdx + " " + frameDir);
           sequencePaths.add(seqIdx++, new Sequence(f.getPath(), frameDir, count));
         }
       }
