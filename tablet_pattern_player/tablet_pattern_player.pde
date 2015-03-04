@@ -57,10 +57,12 @@ int colorPickerModeX = appPaddingWidth;
 int colorPickerModeY = appPaddingHeight + patternPreviewHeight + (numPatternButtonRows * patternButtonHeight);
 String colorPickerModeLabel = "Color Picker";
 
+Button patternPreviewModeButton;
 int patternPreviewModeWidth = 1200;
 int patternPreviewModeHeight = 120;
 int patternPreviewModeX = appPaddingWidth;
 int patternPreviewModeY = appPaddingHeight + patternPreviewHeight + (numPatternButtonRows * patternButtonHeight);
+String patternPreviewModeLabel = "Pattern Preview";
 
 // logo & underlay
 int logoX = appPaddingWidth + buttonGridWidth + buttonGridPaddingRightWidth;
@@ -156,6 +158,15 @@ int[][] panelsInSets = {{}, {}};
 // the values represent the order that the controller groups are scraped to
 //int[][] order = {{1,1}, {2,2}, {3,3}, {4,4}, {5,5}, {6,6}};
 
+ColorPicker cp;
+
+int[][] colors = {
+    {127, 0, 0},
+    {0, 127, 0},
+    {0, 0, 127}
+  };
+boolean colorPickerModeShowing = false;
+
 PImage bg;
 PImage logo;
 PImage errorScreen;
@@ -199,6 +210,7 @@ void setup() {
   cp5 = new ControlP5(this);
   cp5.setControlFont(p);
   cp5.setAutoDraw(false);
+  cp5.setAutoInitialization(false);
   
   // create colorpicker mode button
   colorPickerModeButton = cp5.addButton("colorPickerMode")
@@ -210,9 +222,20 @@ void setup() {
     .setColorBackground(color(255,255,255,25))
     .setColorCaptionLabel(color(17, 84, 130, 255))
     ;
-  // reposition the Label for controller 'colorpickermode'
-  cp5.getController("colorPickerMode").getValueLabel().align(ControlP5.CENTER, ControlP5.CENTER).setPaddingX(0);
-  cp5.getController("colorPickerMode").getCaptionLabel().align(ControlP5.CENTER, ControlP5.CENTER).setPaddingX(0);
+  // create pattern preview mode button
+  patternPreviewModeButton = cp5.addButton("patternPreviewMode")
+    .setCaptionLabel(patternPreviewModeLabel)
+    .setValueLabel(patternPreviewModeLabel)
+    .setValue(0)
+    .setPosition(patternPreviewModeX, patternPreviewModeY)
+    .setSize(patternPreviewWidth, patternPreviewModeHeight)
+    .setColorBackground(color(255,255,255,25))
+    .setColorCaptionLabel(color(17, 84, 130, 255))
+    ;
+  // reposition the Label for controller 'patternPreviewMode'
+  cp5.getController("patternPreviewMode").getValueLabel().align(ControlP5.CENTER, ControlP5.CENTER).setPaddingX(0);
+  cp5.getController("patternPreviewMode").getCaptionLabel().align(ControlP5.CENTER, ControlP5.CENTER).setPaddingX(0);
+  cp5.getController("patternPreviewMode").setVisible(false);
   
   bright1 = cp5.addSlider("bright1")
     .setRange(0,100)
@@ -342,7 +365,11 @@ void setup() {
   registry.addObserver(observer);
   registry.setAntiLog(true);
   registry.setAutoThrottle(true);
-  setupColorPicker();
+
+  // create the color picker instance
+  colorPickerModeShowing = false;
+  cp = new ColorPicker( colorPickerModeX, colorPickerModeY, colorPickerModeWidth, colorPickerModeHeight, 255 );
+
 }
 
 
@@ -386,8 +413,6 @@ void draw() {
       }
     }
   popMatrix();
-  //loadImage("/sdcard/airdroid/upload/patternA/pixelData00001.jpg");
-
 
   //println(sequencePaths.get(chosenPreviewMovie).path + "/pixelData" + nf(currentFrame1, 5) + ".jpg");
   currentFrame1 = (currentFrame1+1) % (sequencePaths.get(chosenPreviewMovie).count);  // Use % to cycle through frames and loop
@@ -396,8 +421,6 @@ void draw() {
   String imageName1 = sequencePaths.get(chosenPreviewMovie).path + "/pixelData" + nf(currentFrame1, 5) + ".jpg";
   String imageName2 = sequencePaths.get(chosenMovie1).path + "/pixelData" + nf(currentFrame2, 5) + ".jpg";
   String imageName3 = sequencePaths.get(chosenMovie2).path + "/pixelData" + nf(currentFrame3, 5) + ".jpg";
-
-  println("imageName1: " + imageName1);
 
   previewMovie1 = loadImage(imageName1);
   previewMovie2 = loadImage(imageName2);
@@ -415,7 +438,9 @@ void draw() {
   set1Buffer.image(previewMovie2, 0, 0,668,24);
   set2Buffer.image(previewMovie3, 0, 0,668,24);
   //image(set1Buffer, 0, 0, 668, 24);
-  drawColorPicker();
+  if(colorPickerModeShowing == true) {
+    cp.render();
+  }
   // if (noStrips) {image(errorScreen, 000, 0,800,1280);} // display error if there are no strips detected
   scrape(); // scrape the offscreen buffer
 }
@@ -467,10 +492,17 @@ public void bright(int setIdx, float globalBright) { // takes a brightness value
   }
 }
 
+public void colorPickerMode(ControlEvent buttonEvent) {
+  if(buttonEvent == null) { return; }
+  colorPickerModeShowing = true;
+  colorPickerModeButton.setVisible(false);
+  patternPreviewModeButton.setVisible(true);
+}
 
 // UI selections
 public void controlEvent(ControlEvent theEvent) {
 
+  if(theEvent == null) { return; }
   String controllerName = theEvent.getController().getName();
   //println("clicked controller: " + controllerName);
   if(controllerName.substring(0, 3).equals("seq")) {
@@ -500,7 +532,6 @@ public void loadSequences() {
   File folder = new File("/sdcard/airdroid/upload");
   //println(folder.getPath());
   String[] seqs = folder.list();
-  //println(seqs);
 
   if(seqs != null) {
     sequencePaths = new ArrayList<Sequence>(seqs.length);
@@ -514,8 +545,9 @@ public void loadSequences() {
           if(null != frames) {
             count = frames.length;
           }
-          //println(seqIdx + " " + frameDir);
+          // println(seqIdx + " " + frameDir);
           sequencePaths.add(seqIdx++, new Sequence(f.getPath(), frameDir, count));
+          // println(f.getPath());
         }
       }
     sequencePaths.trimToSize();
@@ -528,7 +560,7 @@ public void loadSequences() {
 public void onSendButtonPress(ControlEvent buttonEvent) {
 
   int setToSendTo = Integer.parseInt(buttonEvent.getController().getName().substring(4));
-  if(setToSendTo == 1){
+  if(setToSendTo == 1) {
     chosenMovie1 = chosenPreviewMovie;
     currentFrame2 = -1;
   } else if(setToSendTo == 2) {
@@ -565,6 +597,13 @@ public void onPreviewButtonPress(ControlEvent buttonEvent) {
     currentFrame1 = -1;
     println("chose movie #" + chosenPreviewMovie);
   }
+}
+
+public void patternPreviewMode(ControlEvent buttonEvent) {
+  if(buttonEvent == null) { return; }
+  colorPickerModeShowing = false;
+  colorPickerModeButton.setVisible(true);
+  patternPreviewModeButton.setVisible(false);
 }
 
 public void spamCommand(PixelPusher p, PusherCommand pc) {
