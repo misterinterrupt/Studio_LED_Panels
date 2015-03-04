@@ -342,7 +342,7 @@ void setup() {
   registry.addObserver(observer);
   registry.setAntiLog(true);
   registry.setAutoThrottle(true);
-  
+  setupColorPicker();
 }
 
 
@@ -352,7 +352,6 @@ void draw() {
   image(logo, logoX, logoY);
   cp5.draw();
   
-
   // draw a selected state
   pushMatrix();
     fill(255, 255, 255, 80);
@@ -416,6 +415,7 @@ void draw() {
   set1Buffer.image(previewMovie2, 0, 0,668,24);
   set2Buffer.image(previewMovie3, 0, 0,668,24);
   //image(set1Buffer, 0, 0, 668, 24);
+  drawColorPicker();
   // if (noStrips) {image(errorScreen, 000, 0,800,1280);} // display error if there are no strips detected
   scrape(); // scrape the offscreen buffer
 }
