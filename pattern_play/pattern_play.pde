@@ -3,7 +3,6 @@ import com.heroicrobot.dropbit.devices.pixelpusher.Pixel;
 import com.heroicrobot.dropbit.devices.pixelpusher.Strip;
 import com.heroicrobot.dropbit.devices.pixelpusher.PixelPusher;
 import com.heroicrobot.dropbit.devices.pixelpusher.PusherCommand;
-import android.os.Environment;
 import java.util.*;
 import java.io.*;
 import controlP5.*;
@@ -343,13 +342,20 @@ void setup() {
       patternButton_xyPos[idx][1] = (buttonGridY + (ui_yposMultiplier * i));
       //println((idx) + " - x:"+patternButton_xyPos[idx][0]+" y:"+patternButton_xyPos[idx][1]);
     }
-  }  
+  }
 
-  numPatternButtons = sequencePaths.size();
+  // numPatternButtons = sequencePaths.size();
   // create & draw the button grid buttons
   for(int b=0; b<numPatternButtons; b++) {
-    String label = sequencePaths.get(b).name;
-    String name = "seq" + b;
+    String label;
+    String name;
+    if(b <sequencePaths.size()) {
+      label = sequencePaths.get(b).name;
+      name = "seq" + b;
+    } else {
+      label = "";
+      name = "empty" + b;
+    }
     cp5.addButton(name)
       .setCaptionLabel(label)
       .setValueLabel(label)
