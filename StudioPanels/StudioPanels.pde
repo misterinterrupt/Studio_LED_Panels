@@ -57,17 +57,17 @@ int ui_yposMultiplier = patternButtonHeight;
 // mode button area (color picker to pattern preview & back)
 Button colorPickerModeButton;
 int colorPickerModeWidth = 1200;
-int colorPickerModeHeight = 120;
+int colorPickerModeHeight = 140;
 int colorPickerModeX = appPaddingWidth;
 int colorPickerModeY = appPaddingHeight + patternPreviewHeight + (numPatternButtonRows * patternButtonHeight);
-String colorPickerModeLabel = "Color Picker";
+String colorPickerModeLabel = "Solid Colors";
 
 Button patternPreviewModeButton;
 int patternPreviewModeWidth = 1200;
-int patternPreviewModeHeight = 120;
+int patternPreviewModeHeight = 140;
 int patternPreviewModeX = appPaddingWidth;
 int patternPreviewModeY = appPaddingHeight + patternPreviewHeight + (numPatternButtonRows * patternButtonHeight);
-String patternPreviewModeLabel = "Pattern Preview";
+String patternPreviewModeLabel = "Patterns";
 
 // logo & underlay
 int logoX = appPaddingWidth + buttonGridWidth + buttonGridPaddingRightWidth;
@@ -109,7 +109,15 @@ int bright2X = sendPatternSet2X + sliderPaddingInner;
 int bright2Y = bright1Y;
 int brightHandlesSize = 35;
 int sliderValue = 100;
-int globalBright=100;
+int globalBright = 100;
+
+// brightness slider frames
+int brightFrameWidth = 440;
+int brightFrameHeight = brightHeight + (sendPaddingInner * 3) + sendPatternSetLabelHeight;
+int bright1FrameX = sendPatternSet1LabelX;
+int bright1FrameY = sendPatternSet1LabelY + sendPatternSetHeight;
+int bright2FrameX = sendPatternSet2LabelX;
+int bright2FrameY = sendPatternSet2LabelY + sendPatternSetHeight;
 
 // send to set section components
 int setLabelWidth = 440;
@@ -126,16 +134,22 @@ Button setLabel2;
 int[][] patternButton_xyPos = new int[numPatternButtons][2];  // pattern button draw positions, array of [x,y]
 List<Button> patternButtons;
 ArrayList<Sequence> sequencePaths;
-int chosenPreviewMovie=1;
-int chosenMovie1=9;
-int chosenMovie2=9;
+int chosenPreviewMovie=0;
+int chosenMovie1=0;
+int chosenMovie2=0;
+boolean colorPickerModeShowing = false; // show color picker and show picked color in preview space
+boolean showColorOnSet1 = false;
+boolean showColorOnSet2 = false;
+
 int currentFrame1 = 0;
 int currentFrame2 = 0;
 int currentFrame3 = 0;
 PImage previewMovie1;
 PImage previewMovie2;
 PImage previewMovie3;
-
+PGraphics colorPickerPreviewMovie;
+PGraphics colorPickerMovie1;
+PGraphics colorPickerMovie2;
 
 boolean noStrips = true;
 DeviceRegistry registry;
@@ -170,7 +184,6 @@ int[][] colors = {
     {0, 127, 0},
     {0, 0, 127}
   };
-boolean colorPickerModeShowing = false;
 
 PImage bg;
 PImage logo;
@@ -188,7 +201,7 @@ void setup() {
     panelSets[i] = new int[] {Integer.parseInt(savedset[0]), Integer.parseInt(savedset[1])};
     println(setConfig[i]);
   }
-  println("panelSets.length:" + panelSets.length);
+  //println("panelSets.length:" + panelSets.length);
   // String lastSends[] = loadStrings("lastsends.txt");
   // println("there was " + lines.length + " saved send(s)");
   // for (int i = 0 ; i < lines.length; i++) {
@@ -253,9 +266,9 @@ void setup() {
     .setPosition(bright1X, bright1Y)
     .setSize(brightWidth, brightHeight)
     .setHandleSize(brightHandlesSize)
-    .setColorActive(color(255,255,255,150))
-    .setColorForeground(color(255,255,255,150))
-    .setColorBackground(color(255,255,255,0))
+    .setColorActive(color(255,255,255,50))
+    .setColorForeground(color(255,255,255,50))
+    .setColorBackground(color(255,255,255,50))
     .setDecimalPrecision(0)
     .setSliderMode(controlP5.Slider.FLEXIBLE)
     ;
@@ -270,9 +283,9 @@ void setup() {
     .setPosition(bright2X, bright2Y)
     .setSize(brightWidth, brightHeight)
     .setHandleSize(brightHandlesSize)
-    .setColorActive(color(255,255,255,150))
-    .setColorForeground(color(255,255,255,150))
-    .setColorBackground(color(255,255,255,0))
+    .setColorActive(color(255,255,255,50))
+    .setColorForeground(color(255,255,255,50))
+    .setColorBackground(color(255,255,255,50))
     .setDecimalPrecision(0)
     .setSliderMode(controlP5.Slider.FLEXIBLE)
     ;
@@ -286,7 +299,7 @@ void setup() {
     .setCaptionLabel("Set #1")
     .setColorCaptionLabel(color(24, 118, 183, 255))
     .setSize(setLabelWidth, setLabelHeight)
-    .setColorActive(color(255,255,255,150))
+    .setColorActive(color(255,255,255,255))
     .setColorForeground(color(255,255,255,150))
     .setColorBackground(color(255,255,255,255))
     ;
@@ -299,7 +312,7 @@ void setup() {
     .setCaptionLabel("Set #2")
     .setColorCaptionLabel(color(24, 118, 183, 255))
     .setSize(setLabelWidth, setLabelHeight)
-    .setColorActive(color(255,255,255,150))
+    .setColorActive(color(255,255,255,255))
     .setColorForeground(color(255,255,255,150))
     .setColorBackground(color(255,255,255,255))
     ;
@@ -329,6 +342,10 @@ void setup() {
     .setValue(0)
     .setPosition(sendPatternSet2X, sendPatternSet2Y)
     .setSize(sendPatternSetWidth, sendPatternSetHeight)
+    .setColorCaptionLabel(color(17, 84, 130, 255))
+    .setColorActive(color(255,255,255,150))
+    .setColorForeground(color(255,255,255, 150))
+    .setColorBackground(color(255,255,255,75))
     ;
   // reposition the Label for controller 'set2'
   cp5.getController("send2").getValueLabel().align(ControlP5.CENTER, ControlP5.CENTER).setPaddingX(0);
@@ -345,11 +362,22 @@ void setup() {
     }
   }  
 
-  numPatternButtons = sequencePaths.size();
+  // numPatternButtons = sequencePaths.size();
   // create & draw the button grid buttons
   for(int b=0; b<numPatternButtons; b++) {
-    String label = sequencePaths.get(b).name;
-    String name = "seq" + b;
+    String label;
+    String name;
+    color activeColor;
+    color bgColor = color(255,255,255,80);
+    if(b <sequencePaths.size()) {
+      label = sequencePaths.get(b).name;
+      name = "seq" + b;
+      activeColor = color(255,255,255,120);
+    } else {
+      label = "";
+      name = "empty" + b;
+      activeColor = bgColor;
+    }
     cp5.addButton(name)
       .setCaptionLabel(label)
       .setValueLabel(label)
@@ -360,9 +388,9 @@ void setup() {
       .setPosition(patternButton_xyPos[b][0], patternButton_xyPos[b][1])
       .setSize(patternButtonWidth, patternButtonHeight)
       .setColorCaptionLabel(color(17, 84, 130, 255))
-      .setColorActive(color(255,255,255,150))
+      .setColorActive(activeColor)
       //.setColorForeground(color(255,255,255, 150))
-      .setColorBackground(color(255,255,255,60))
+      .setColorBackground(bgColor)
       ;
       // reposition the Label for controllers named 'seq'+(b+1)
       cp5.getController(name).getValueLabel().align(ControlP5.CENTER, ControlP5.CENTER).setPaddingX(0);
@@ -376,8 +404,10 @@ void setup() {
   registry.setAutoThrottle(true);
 
   // create the color picker instance
-  colorPickerModeShowing = false;
-  cp = new ColorPicker( buttonGridX, buttonGridY, buttonGridWidth, buttonGridHeight, 255 );
+  colorPickerModeShowing = false; // show color picker and show picked color in preview space
+  colorPickerMovie1 = createGraphics(patternPreviewWidth, patternPreviewHeight);
+  colorPickerMovie2 = createGraphics(patternPreviewWidth, patternPreviewHeight);
+  cp = new ColorPicker( buttonGridX, buttonGridY, buttonGridWidth, buttonGridHeight, 255, patternPreviewWidth, patternPreviewHeight );
 
 }
 
@@ -404,10 +434,26 @@ void draw() {
     rect(0, 0, logoFrameWidth, logoFrameHeight);
   popMatrix();
 
+  // draw bright1 frame
+  pushMatrix();
+    translate(bright1FrameX, bright1FrameY);
+    noStroke();
+    fill(255, 255, 255, 25);
+    rect(0, 0, brightFrameWidth, brightFrameHeight);
+  popMatrix();
+
+  // draw bright1 frame
+  pushMatrix();
+    translate(bright2FrameX, bright2FrameY);
+    noStroke();
+    fill(255, 255, 255, 25);
+    rect(0, 0, brightFrameWidth, brightFrameHeight);
+  popMatrix();
+
   // draw grid lines
   pushMatrix();
     noFill();
-    stroke(0, 0, 0, 25);
+    stroke(0, 0, 0, 50);
     translate(buttonGridX, buttonGridY);
     // vertical lines
     for(int j=0; j<numPatternButtonCols; j++) {
@@ -430,33 +476,44 @@ void draw() {
   currentFrame1 = (currentFrame1) % (sequencePaths.get(chosenPreviewMovie).count);  // Use % to cycle through frames and loop
   currentFrame2 = (currentFrame2) % (sequencePaths.get(chosenMovie1).count);  // Use % to cycle through frames and loop
   currentFrame3 = (currentFrame3) % (sequencePaths.get(chosenMovie2).count);  // Use % to cycle through frames and loop
-  String imageName1 = sequencePaths.get(chosenPreviewMovie).frames[currentFrame1++].getPath();
-  String imageName2 = sequencePaths.get(chosenMovie1).frames[currentFrame2++].getPath();
-  String imageName3 = sequencePaths.get(chosenMovie2).frames[currentFrame3++].getPath();
+  
 
-  // String imageName1 = sequencePaths.get(chosenPreviewMovie).path + "/pixelData" + nf(currentFrame1, 5) + ".jpg";
-  // String imageName2 = sequencePaths.get(chosenMovie1).path + "/pixelData" + nf(currentFrame2, 5) + ".jpg";
-  // String imageName3 = sequencePaths.get(chosenMovie2).path + "/pixelData" + nf(currentFrame3, 5) + ".jpg";
-
-  previewMovie1 = loadImage(imageName1);
-  previewMovie2 = loadImage(imageName2);
-  previewMovie3 = loadImage(imageName3);
-
-  image(previewMovie1, 200, 150, 1200, 200);
-  //image(previewMovie2, 0, 0, 1200, 200);
-  //image(previewMovie3, 0, 0, 1200, 200);
-
-  patternPreviewBuffer.beginDraw();
-  set1Buffer.beginDraw();
-  set2Buffer.beginDraw();
-
-  patternPreviewBuffer.image(previewMovie1, 0, 0,668,24);
-  set1Buffer.image(previewMovie2, 0, 0,668,24);
-  set2Buffer.image(previewMovie3, 0, 0,668,24);
-  //image(set1Buffer, 0, 0, 668, 24);
+  // show color picker and show picked color in preview space
   if(colorPickerModeShowing == true) {
+    // when rendering the cp, also make a solid color graphic for the preview
     cp.render();
+    colorPickerPreviewMovie = cp.colorMovie;
+    image(colorPickerPreviewMovie, 200, 150, 1200, 200);
+    patternPreviewBuffer.image(colorPickerPreviewMovie, 0, 0,668,24);
+  } else {
+    String imageName1 = sequencePaths.get(chosenPreviewMovie).frames[currentFrame1++].getPath();
+    previewMovie1 = loadImage(imageName1);
+    image(previewMovie1, 200, 150, 1200, 200);
+    patternPreviewBuffer.image(previewMovie1, 0, 0,668,24);
   }
+
+
+  if(showColorOnSet1 == true) {
+    set1Buffer.image(colorPickerMovie1, 0, 0,668,24);
+    image(colorPickerMovie1, set1LabelX, set1LabelY, setLabelWidth, setLabelHeight);
+  } else {
+    String imageName2 = sequencePaths.get(chosenMovie1).frames[currentFrame2++].getPath();
+    previewMovie2 = loadImage(imageName2);
+    set1Buffer.image(previewMovie2, 0, 0,668,24);
+    image(previewMovie2, set1LabelX, set1LabelY, setLabelWidth, setLabelHeight);
+  }
+
+
+  if(showColorOnSet2 == true) {
+    set2Buffer.image(colorPickerMovie2, 0, 0,668,24);
+    image(colorPickerMovie2, set2LabelX, set2LabelY, setLabelWidth, setLabelHeight);
+  } else {
+    String imageName3 = sequencePaths.get(chosenMovie2).frames[currentFrame3++].getPath();
+    previewMovie3 = loadImage(imageName3);
+    set2Buffer.image(previewMovie3, 0, 0,668,24);
+    image(previewMovie3, set2LabelX, set2LabelY, setLabelWidth, setLabelHeight);
+  }
+
   // if (noStrips) {image(errorScreen, 000, 0,800,1280);} // display error if there are no strips detected
   scrape(); // scrape the offscreen buffer
 }
@@ -478,7 +535,7 @@ public void brightnessGroups() {
 public void bright1(ControlEvent globalBright) {
   float val = globalBright.getValue();
   if(val > 0 || val < 100) {
- println ("brightness = " + val);
+    //println ("brightness = " + val);
     bright(0, val);
   }
 }
@@ -486,7 +543,7 @@ public void bright1(ControlEvent globalBright) {
 public void bright2(ControlEvent globalBright) {
   float val = globalBright.getValue();
   if(val > 0 || val < 100) {
- println ("brightness = " + val);
+    //println ("brightness = " + val);
     bright(1, val);
   }
 }
@@ -510,7 +567,7 @@ public void bright(int setIdx, float globalBright) { // takes a brightness value
 
 public void colorPickerMode(ControlEvent buttonEvent) {
   if(buttonEvent == null) { return; }
-  colorPickerModeShowing = true;
+  colorPickerModeShowing = true; // show color picker and show picked color in preview space
   colorPickerModeButton.setVisible(false);
   patternPreviewModeButton.setVisible(true);
 }
@@ -577,13 +634,36 @@ public void onSendButtonPress(ControlEvent buttonEvent) {
 
   int setToSendTo = Integer.parseInt(buttonEvent.getController().getName().substring(4));
   if(setToSendTo == 1) {
-    chosenMovie1 = chosenPreviewMovie;
-    currentFrame2 = 0;
+    if(colorPickerModeShowing == true) {
+      // println("changing color picker for set 1");
+      colorPickerMovie1 = createGraphics(patternPreviewWidth, patternPreviewHeight);
+      colorPickerMovie1.loadPixels();
+      cp.colorMovie.loadPixels();
+      arrayCopy(cp.colorMovie.pixels, colorPickerMovie1.pixels);
+      colorPickerMovie1.updatePixels();
+      showColorOnSet1 = true;
+    } else {
+      showColorOnSet1 = false;
+      chosenMovie1 = chosenPreviewMovie;
+      currentFrame2 = 0;
+      // println("sent movie #" + chosenPreviewMovie + " to set #" + setToSendTo);
+    }
   } else if(setToSendTo == 2) {
-    chosenMovie2 = chosenPreviewMovie;
-    currentFrame3 = 0;
+    if(colorPickerModeShowing == true) {
+      // println("changing color picker for set 2");
+      colorPickerMovie2 = createGraphics(patternPreviewWidth, patternPreviewHeight);
+      colorPickerMovie2.loadPixels();
+      cp.colorMovie.loadPixels();
+      arrayCopy(cp.colorMovie.pixels, colorPickerMovie2.pixels);
+      colorPickerMovie2.updatePixels();
+      showColorOnSet2 = true;
+    } else {
+      showColorOnSet2 = false;
+      chosenMovie2 = chosenPreviewMovie;
+      currentFrame3 = 0;
+      // println("sent movie #" + chosenPreviewMovie + " to set #" + setToSendTo);
+    }
   }
-  println("sent movie #" + chosenPreviewMovie + " to set #" + setToSendTo);
 }
 
 public void onPreviewButtonPress(ControlEvent buttonEvent) {
@@ -611,13 +691,13 @@ public void onPreviewButtonPress(ControlEvent buttonEvent) {
     int patternNum = Integer.parseInt(((String)butt.getName()).substring(3));
     chosenPreviewMovie = patternNum;
     currentFrame1 = 0;
-    println("chose movie #" + chosenPreviewMovie);
+    // println("chose movie #" + chosenPreviewMovie);
   }
 }
 
 public void patternPreviewMode(ControlEvent buttonEvent) {
   if(buttonEvent == null) { return; }
-  colorPickerModeShowing = false;
+  colorPickerModeShowing = false; // show color picker and show picked color in preview space
   colorPickerModeButton.setVisible(true);
   patternPreviewModeButton.setVisible(false);
 }

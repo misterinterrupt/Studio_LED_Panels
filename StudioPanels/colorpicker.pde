@@ -6,8 +6,9 @@ public class ColorPicker
 {
   int x, y, w, h, c;
   PImage cpImage;
-  
-  public ColorPicker ( int x, int y, int w, int h, int c )
+  PGraphics colorMovie;
+
+  public ColorPicker ( int x, int y, int w, int h, int c, int buffW, int buffH )
   {
     this.x = x;
     this.y = y;
@@ -16,7 +17,7 @@ public class ColorPicker
     this.c = c;
     
     cpImage = new PImage( w, h );
-    
+    colorMovie = createGraphics( buffW, buffH );
     init();
   }
   
@@ -45,7 +46,7 @@ public class ColorPicker
     for( int j=0; j<h; j++ )
     {
       int g = 255 - (int)(j/(float)(h-1) * 255 );
-      drawRect( w-30, j, 30, 1, color( g, g, g ) );
+      drawRect( w-60, j, 60, 1, color( g, g, g ) );
     }
   }
 
@@ -84,7 +85,10 @@ public class ColorPicker
     {
       c = get( mouseX, mouseY );
     }
-    fill( c );
-    rect( x, y+h+10, 20, 20 );
+    this.colorMovie.beginDraw();
+    // this.colorMovie.fill( c );
+    // this.colorMovie.rect( 0, 0, w, h );
+    this.colorMovie.background( c );
+    this.colorMovie.endDraw();
   }
 }

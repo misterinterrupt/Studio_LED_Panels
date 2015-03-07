@@ -23,7 +23,7 @@ void setup() {
   
   size(1080, 800);
   frameRate(30);
-  println("starting width: " + width);
+  println("starting");
   registry = new DeviceRegistry();
   observer = new PusherObserver();
   registry.addObserver(observer);
@@ -38,10 +38,6 @@ void draw() {
 
   if (fileSelected) {
     if(myMovie.time() >= myMovie.duration()) {
-      println("times::::::::::::::::::::::   ");
-      println("times::::::::::::::::::::::   time: " + myMovie.time());
-      println("times::::::::::::::::::::::   duration: " + myMovie.duration());
-      println("times::::::::::::::::::::::   ");
       myMovie.jump(0.0);
     }
     image(myMovie, appPaddingWidth, appPaddingHeight + logoFrameHeight, width-120, 200);
