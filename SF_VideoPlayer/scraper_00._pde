@@ -1,0 +1,122 @@
+void scrape() {
+  // scrape for the strips
+  float xpos, ypos = 0;
+  loadPixels();
+  if (observer.hasStrips) {
+    registry.startPushing();
+    boolean phase = false;
+
+
+    // First, scrape for the left hand panel of the display
+
+    List<Strip> strips = registry.getStrips(1);
+
+    if (strips.size() > 0) {
+
+      // for each strip (y-direction)
+
+      for (Strip strip : strips) {
+
+        int strides_per_strip = strip.getLength() / stride;
+        float xscale = (width/3) / stride;
+        float yscale = (height) / strides_per_strip * strips.size();
+
+        for (int stripx = 0; stripx < strip.getLength(); stripx++) {
+          int xpixel = stripx % stride;
+          int stridenumber = stripx / stride; 
+
+
+          // zigzag code
+          if ((stridenumber & 1) == 0) { // we are going left to right
+            xpos = xpixel * xscale;
+          } else { // we are going right to left
+            xpos = ((stride - 1)-xpixel) * xscale;
+          }
+
+          //  println ("getting pixel from "+xpos + "," + ypos);
+
+          color c = get((int) xpos, (int)ypos);
+          strip.setPixel(c, stripx);
+        } //end x loop
+        ypos = ypos + 1; // next row
+      }
+    }
+
+
+ypos=0;
+
+    // Secondly, scrape for the middle panel of the display
+    strips = registry.getStrips(2);
+
+    if (strips.size() > 0) {
+
+      // for each strip (y-direction)
+
+      for (Strip strip : strips) {
+
+        int strides_per_strip = strip.getLength() / stride;
+        float xscale = (width/3) / stride;
+        float yscale = (height) / strides_per_strip * strips.size();
+
+        for (int stripx = 0; stripx < strip.getLength(); stripx++) {
+          int xpixel = stripx % stride;
+          int stridenumber = stripx / stride; 
+
+
+          // zigzag code
+          if ((stridenumber & 1) == 0) { // we are going left to right
+            xpos = (xpixel * xscale) + 167;
+          } else { // we are going right to left
+            xpos = (((stride - 1)-xpixel) * xscale)+167;
+          }
+
+          //  println ("getting pixel from "+xpos + "," + ypos);
+
+          color c = get((int) xpos, (int)ypos);
+          strip.setPixel(c, stripx);
+        } //end x loop
+        ypos = ypos + 1; // next row
+      }
+    }
+
+ypos=0;
+      
+      // Finally, scrape for the right hand panel of the display
+      
+       strips = registry.getStrips(3);
+
+    if (strips.size() > 0) {
+
+      // for each strip (y-direction)
+
+      for (Strip strip : strips) {
+
+        int strides_per_strip = strip.getLength() / stride;
+        float xscale = (width/3) / stride;
+        float yscale = (height) / strides_per_strip * strips.size();
+
+        for (int stripx = 0; stripx < strip.getLength(); stripx++) {
+          int xpixel = stripx % stride;
+          int stridenumber = stripx / stride; 
+
+
+          // zigzag code
+          if ((stridenumber & 1) == 0) { // we are going left to right
+            xpos = (xpixel * xscale) + 334;
+          } else { // we are going right to left
+            xpos = (((stride - 1)-xpixel) * xscale)+334;
+          }
+
+          //  println ("getting pixel from "+xpos + "," + ypos);
+
+          color c = get((int) xpos, (int)ypos);
+          strip.setPixel(c, stripx);
+        } //end x loop
+        ypos = ypos + 1; // next row
+      }
+    }
+
+      
+    }
+  }
+
