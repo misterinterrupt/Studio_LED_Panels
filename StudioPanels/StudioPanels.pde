@@ -192,22 +192,7 @@ PImage errorScreen;
 
 void setup() {
 
-  
-  // load configs
-  String setConfig[] = loadStrings("setconfig.txt");
-  println("there are " + setConfig.length + " sets");
-  for (int i = 0 ; i < numSets; i++) {
-    String[] savedset = setConfig[i].split(",");
-    panelSets[i] = new int[] {Integer.parseInt(savedset[0]), Integer.parseInt(savedset[1])};
-    println(setConfig[i]);
-  }
-  //println("panelSets.length:" + panelSets.length);
-  // String lastSends[] = loadStrings("lastsends.txt");
-  // println("there was " + lines.length + " saved send(s)");
-  // for (int i = 0 ; i < lines.length; i++) {
-  //   println(lines[i]);
-  // }
-
+  loadConfig();
   brightnessGroups();
   loadSequences();
 
@@ -596,13 +581,36 @@ public void controlEvent(ControlEvent theEvent) {
 //     return file;
 // }
 
+public void loadConfig() {
+  // load configs
+  String setConfig[];
+  try {
+    setConfig = loadStrings("/sdcard/airdroid/upload/setconfig.txt");
+  } catch(Exception e) {
+    // load a default config
+    setConfig = loadStrings("setconfig.txt");
+  }
+  println("there are " + setConfig.length + " sets");
+  for (int i = 0 ; i < numSets; i++) {
+    String[] savedset = setConfig[i].split(",");
+    panelSets[i] = new int[] {Integer.parseInt(savedset[0]), Integer.parseInt(savedset[1])};
+    println(setConfig[i]);
+  }
+  //println("panelSets.length:" + panelSets.length);
+  // String lastSends[] = loadStrings("lastsends.txt");
+  // println("there was " + lines.length + " saved send(s)");
+  // for (int i = 0 ; i < lines.length; i++) {
+  //   println(lines[i]);
+  // }
+}
+
 public void loadSequences() {
   
   // load sequence paths and count their durations 
   // File folder = new File(sketchPath("sequences"));
   // File folder = getMovieStorageDir();
   // File folder = new File("//sdcard/Movies");
-  File folder = new File("/sdcard/airdroid/upload");
+  File folder = new File("/sdcard/airdroid/upload/sequences");
   //println(folder.getPath());
   String[] seqs = folder.list();
 
@@ -612,7 +620,8 @@ public void loadSequences() {
       for (int i = 0; i < seqs.length; i++) {
         File f = new File(seqs[i]);
         int count = 0;
-        if(!f.isHidden()) {
+        println("name: " + f.getName());
+        if( !f.isHidden() ) {
           String frameDir = folder.getPath() + f.separatorChar + f.getPath();
           File[] frames = new File(frameDir).listFiles();
           if(null != frames) {
